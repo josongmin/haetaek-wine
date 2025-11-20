@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
-import TabNavigation from './components/layout/TabNavigation';
+import { TabNavigation, UserBadge } from './shared/components/Layout';
 import ReviewPricePage from './pages/ReviewPricePage';
 import ReviewShopPage from './pages/ReviewShopPage';
 import ReviewWinePage from './pages/ReviewWinePage';
-import UserBadge from './components/layout/UserBadge';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('price');

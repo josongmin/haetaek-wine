@@ -1,3 +1,6 @@
+/* Design Tokens */
+@import './tokens.css';
+
 body {
   font-family: sans-serif;
   margin: 0;

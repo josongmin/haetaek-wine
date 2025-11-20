@@ -11,10 +11,8 @@ import ShopPopup from '../components/reviewPrice/ShopPopup';
 import WineSearchPopup from '../components/reviewPrice/WineSearchPopup';
 import AiTextRecognitionModal from '../components/reviewPrice/AiTextRecognitionModal';
 import { fetchWinePrices } from '../api/wineApi';
-import SingleModalContainer from '../components/containers/SingleModalContainer';
-import TwinModalStage from '../components/containers/TwinModalStage';
-import PriceHistoryContent from '../components/common/PriceHistoryContent';
-import IdealAuctionContent from '../components/common/IdealAuctionContent';
+import { SingleModalContainer, TwinModalStage } from '../shared/components/Modal';
+import { PriceHistoryContent, IdealAuctionContent } from '../shared/components/Content';
 import { getDefaultFiltersForUser } from '../components/reviewPrice/PriceFilterForm'
 import { ROLE_OPTIONS } from '../components/reviewPrice/SelectAdminWriterPopup';
 
