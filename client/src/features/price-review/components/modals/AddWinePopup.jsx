@@ -1,12 +1,12 @@
 // src/components/AddWinePopup.jsx
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { UserContext } from '../../../UserContext';
+import { UserContext } from '../../../../UserContext';
 import CreatableSelect from 'react-select/creatable';
 import AsyncSelect from 'react-select/async';
 import { toast } from 'react-hot-toast';
 import { TbWand } from 'react-icons/tb';
 import './AddWinePopup.css';
-import grapeOptions from '../../../shared/utils/grapeOptions';
+import grapeOptions from '../../../../shared/utils/grapeOptions';
 import {
   addWine,
   updateWine,
@@ -14,7 +14,7 @@ import {
   fetchWineByIndex,
   searchWines,
   mergeWine
-} from '../../../api/wineApi';
+} from '../../../../api/wineApi';
 import { WineType } from '@myorg/shared/constants/wineType';
 import { WineStatusMap, WineStatusOptions } from '@myorg/shared/constants/wineStatusMap';
 import WineSearchPopup from './WineSearchPopup';

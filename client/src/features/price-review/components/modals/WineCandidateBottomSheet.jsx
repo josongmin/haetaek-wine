@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { searchSingleCandidateV3 } from '../../../api/wineApi';
+import { searchSingleCandidateV3 } from '../../../../api/wineApi';
 import './WineCandidateBottomSheet.css';
 
 export default function WineCandidateBottomSheet({ isOpen, onClose, wine, onSelectWine, onRegisterWine }) {

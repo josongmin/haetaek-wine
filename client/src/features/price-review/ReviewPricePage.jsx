@@ -4,7 +4,7 @@ import { UserContext } from '../../UserContext';
 import PriceFilterForm from './components/PriceFilterForm';
 import PriceList from './components/PriceList';
 import AddWinePopup from './components/modals/AddWinePopup';
-import EditWineShopPricePopup from './components/EditWineShopPricePopup';
+import EditWineShopPricePopup from './components/modals/EditWineShopPricePopup';
 import UserPopup from './components/modals/UserPopup';
 import ShopPopup from './components/modals/ShopPopup';
 import WineSearchPopup from './components/modals/WineSearchPopup';

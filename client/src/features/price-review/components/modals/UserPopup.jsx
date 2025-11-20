@@ -1,7 +1,7 @@
 // src/components/reviewPrice/UserPopup.jsx
 import React, { useState } from 'react';
 import './UserPopup.css';
-import { getHotDealCountOfUser } from '../../../api/wineApi'
+import { getHotDealCountOfUser } from '../../../../api/wineApi'
 
 export default function UserPopup({
   item,
