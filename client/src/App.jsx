@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { TabNavigation, UserBadge } from './shared/components/Layout';
-import ReviewPricePage from './pages/ReviewPricePage';
+import ReviewPricePage from './features/price-review/ReviewPricePage';
 import ReviewShopPage from './pages/ReviewShopPage';
 import ReviewWinePage from './pages/ReviewWinePage';
 
