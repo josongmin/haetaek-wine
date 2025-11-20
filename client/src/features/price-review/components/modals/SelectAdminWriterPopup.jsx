@@ -1,9 +1,9 @@
 // src/components/reviewPrice/SelectAdminWriterPopup.jsx
 import React, { useState, useEffect, useContext } from 'react';
 import styles from './SelectAdminWriterPopup.module.css';
-import { updateWinePriceWriter } from '../../api/wineApi';
+import { updateWinePriceWriter } from '../../../api/wineApi';
 import { toast } from 'react-hot-toast';
-import { UserContext } from '../../UserContext';
+import { UserContext } from '../../../UserContext';
 
 // 추후 서버에서 받아올 라벨/인덱스/아이디/닉네임 매핑
 export const ROLE_OPTIONS = [

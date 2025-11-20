@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Modal from 'react-modal';
 import { toast } from 'react-hot-toast';
-import { keywordSuggestion, deleteSearchCache, getWineDetails } from '../../api/wineApi';
+import { keywordSuggestion, deleteSearchCache, getWineDetails } from '../../../api/wineApi';
 import './WineSearchPopup.css';
 
 Modal.setAppElement('#root');

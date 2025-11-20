@@ -1,7 +1,7 @@
 // src/api/wineApi.js
 
 import axios from 'axios';
-import { buildUserLevelChangedData, getLevelPushText } from '../utils/pushMessage';
+import { buildUserLevelChangedData, getLevelPushText } from '../shared/utils/pushMessage';
 
 
 const API_BASE_URL = 'https://asommguide.com';

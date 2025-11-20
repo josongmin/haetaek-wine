@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { UserContext } from '../../UserContext';
-import { aiSuggestionFulltext } from '../../api/wineApi';
+import { UserContext } from '../../../UserContext';
+import { aiSuggestionFulltext } from '../../../api/wineApi';
 import WineCandidateBottomSheet from './WineCandidateBottomSheet';
 import { TbWand } from 'react-icons/tb';
 import { toast } from 'react-hot-toast';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import './PriceCell.css';
-import { formatPrice } from '../../utils/formatPrice';
+import { formatPrice } from '../../../shared/utils/formatPrice';
 import { FaImage } from 'react-icons/fa';
 import {
   insertPointForWritePrice, updatePointForWritePrice, insertReportForPrice, updateReportForPrice,
@@ -10,9 +10,9 @@ import {
   updatePhotoType, deletePointHistoryWithSyncUserPoint, deletePriceWithRelatedData,
   pushPriceReview, sendPushToTopic, getUserByIndex, pushUserLevelChanged, updateWineStatus,
   updateWineStatusToIncompleteIfNotPass
-} from '../../api/wineApi';
-import { levelTitle, MIN_LEVEL_ADMIN } from '../../utils/levelUtils'; // levelTitle(level: number): string
-import { toLocalDisplay } from '../../utils/dateTimeUtils';
+} from '../../../api/wineApi';
+import { levelTitle, MIN_LEVEL_ADMIN } from '../../../shared/utils/levelUtils'; // levelTitle(level: number): string
+import { toLocalDisplay } from '../../../shared/utils/dateTimeUtils';
 import {
   winePriceStatusOptions,
   PRICE_STATUS_WAITING,
@@ -21,8 +21,8 @@ import {
   PRICE_STATUS_REJECT,
   PRICE_STATUS_DELETED
 } from '@myorg/shared/constants/winePriceStatusMap';
-import { useDragClickGuard } from '../../utils/useDragClickGuard';
-import { buildHotDealMessage } from '../../utils/pushMessage';
+import { useDragClickGuard } from '../../../shared/utils/useDragClickGuard';
+import { buildHotDealMessage } from '../../../shared/utils/pushMessage';
 import {
   //WINE_STATUS_PASS,
   //WINE_STATUS_WAITING,

@@ -1,6 +1,6 @@
 // src/components/containers/SingleModalContainer.jsx
 import React, { useEffect, useRef } from 'react';
-import HeadlessModal from '../common/HeadlessModal';
+import HeadlessModal from '../Content/HeadlessModal';
 import styles from './SingleModalContainer.module.css';
 
 export default function SingleModalContainer({

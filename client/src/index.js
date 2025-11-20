@@ -6,7 +6,7 @@ import Login from './pages/Login';
 import { UserProvider } from './UserContext';
 import ProtectedRoute from './routes/ProtectedRoute';
 import './styles/global.css';
-import './components/containers/modalTokens.css';
+import './shared/components/Modal/modalTokens.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

@@ -1,7 +1,7 @@
 // src/components/reviewPrice/EditWineShopPricePopup.jsx
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import styles from './EditWineShopPricePopup.module.css';
-import { UserContext } from '../../UserContext';
+import { UserContext } from '../../../UserContext';
 import {
   searchWines,
   getWineShopList,
@@ -11,16 +11,16 @@ import {
   createWinePrice,
   setShowInWineDetailPage,
   setShowInSpecialPricePage,
-} from '../../api/wineApi';
+} from '../../../api/wineApi';
 import { WineStatusMap } from '@myorg/shared/constants/wineStatusMap';
-import { toLocalInputValue } from '../../utils/dateTimeUtils';
+import { toLocalInputValue } from '../../../shared/utils/dateTimeUtils';
 import { toast } from 'react-hot-toast';
 import WriterRolePopup from './SelectAdminWriterPopup';
 import SelectAdminWriterPopup from './SelectAdminWriterPopup';
 import AddWinePopup from './AddWinePopup';
 import WineSearchPopup from './WineSearchPopup';
 import { FaSearch } from 'react-icons/fa';
-import { MIN_LEVEL_ADMIN } from '../../utils/levelUtils';
+import { MIN_LEVEL_ADMIN } from '../../../shared/utils/levelUtils';
 
 // ---- last-submission snapshot helpers ----
 const LAST_PRICE_KEY = 'lastPriceDraft_v1';

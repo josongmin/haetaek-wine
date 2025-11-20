@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { searchSingleCandidateV3 } from '../../api/wineApi';
+import { searchSingleCandidateV3 } from '../../../api/wineApi';
 import './WineCandidateBottomSheet.css';
 
 export default function WineCandidateBottomSheet({ isOpen, onClose, wine, onSelectWine, onRegisterWine }) {
@@ -76,35 +76,35 @@ export default function WineCandidateBottomSheet({ isOpen, onClose, wine, onSele
       if (response.ok) {
         const data = await response.json();
         const parsed = data.topIndices;
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const validIndices = parsed.filter(idx => idx >= 0 && idx < results.length).slice(0, 3);
-            
-            // 마법 애니메이션으로 순차적으로 하이라이트
-            setAnalysisStatus('AI 매칭 완료');
-            
-            // 각 카드를 순차적으로 하이라이트 (마법 효과)
-            validIndices.forEach((idx, order) => {
-              setTimeout(() => {
-                setHighlightedIndices(prev => {
-                  const newIndices = [...prev];
-                  if (!newIndices.includes(idx)) {
-                    newIndices.push(idx);
-                  }
-                  return newIndices;
-                });
-                
-                if (order === validIndices.length - 1) {
-                  // 마지막 카드 하이라이트 후 완료 상태
-                  setTopPicks(validIndices);
-                  setTimeout(() => {
-                    setAnalysisStatus(`✨ ${validIndices.length}개 매칭 완료`);
-                  }, 500);
+        
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const validIndices = parsed.filter(idx => idx >= 0 && idx < results.length).slice(0, 3);
+          
+          // 마법 애니메이션으로 순차적으로 하이라이트
+          setAnalysisStatus('AI 매칭 완료');
+          
+          // 각 카드를 순차적으로 하이라이트 (마법 효과)
+          validIndices.forEach((idx, order) => {
+            setTimeout(() => {
+              setHighlightedIndices(prev => {
+                const newIndices = [...prev];
+                if (!newIndices.includes(idx)) {
+                  newIndices.push(idx);
                 }
-              }, order * 300); // 300ms 간격으로 순차 표시
-            });
-            
-            console.log(`[WineCandidateBottomSheet] OpenAI 선택 결과:`, validIndices);
-          }
+                return newIndices;
+              });
+              
+              if (order === validIndices.length - 1) {
+                // 마지막 카드 하이라이트 후 완료 상태
+                setTopPicks(validIndices);
+                setTimeout(() => {
+                  setAnalysisStatus(`✨ ${validIndices.length}개 매칭 완료`);
+                }, 500);
+              }
+            }, order * 300); // 300ms 간격으로 순차 표시
+          });
+          
+          console.log(`[WineCandidateBottomSheet] OpenAI 선택 결과:`, validIndices);
         }
       } else {
         console.error('[WineCandidateBottomSheet] OpenAI 분석 실패:', response.status);

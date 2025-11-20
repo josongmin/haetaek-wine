@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { UserContext } from '../../UserContext';
+import { UserContext } from '../../../UserContext';
 import styles from './UserBadge.module.css';
 
 export default function UserBadge() {

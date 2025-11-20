@@ -1,6 +1,6 @@
 // src/components/containers/TwinModalStage.jsx
 import React from 'react';
-import HeadlessModal from '../common/HeadlessModal';
+import HeadlessModal from '../Content/HeadlessModal';
 import styles from './TwinModalStage.module.css';
 
 export default function TwinModalStage({

@@ -1,8 +1,8 @@
 // src/components/PriceFilterForm.jsx
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { UserContext } from '../../UserContext';
+import { UserContext } from '../../../UserContext';
 import { toast } from 'react-hot-toast';
-import { searchWines, getWineShopList } from '../../api/wineApi';
+import { searchWines, getWineShopList } from '../../../api/wineApi';
 import { WineStatusMap } from '@myorg/shared/constants/wineStatusMap';
 
 // -------------------- 나중에 utils 로 뺄지 고민 --------------------
