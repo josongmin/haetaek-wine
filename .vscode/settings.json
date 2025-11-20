@@ -1,0 +1,9 @@
+{
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.vscode": true,
+    "**/pnpm-store": true,
+    "**/.cursorignore": true,
+    "**/package-lock.json": true
+  }
+}

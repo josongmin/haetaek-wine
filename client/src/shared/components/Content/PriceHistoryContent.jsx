@@ -1,7 +1,7 @@
 // src/components/common/PriceHistoryContent.jsx
 import React, { useEffect, useState, useCallback } from "react";
-import { fetchWinePrices } from "../../api/wineApi";
-import { formatRelative } from "../../utils/dateTimeUtils";
+import { fetchWinePrices } from "../../../api/wineApi";
+import { formatRelative } from "../../../shared/utils/dateTimeUtils";
 import styles from "./PriceHistoryContent.module.css";
 import { PRICE_STATUS_PASS } from '@myorg/shared/constants/winePriceStatusMap'
 

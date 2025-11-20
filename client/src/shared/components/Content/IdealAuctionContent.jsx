@@ -1,7 +1,7 @@
 // src/components/common/IdealAuctionContent.jsx
 import React, { useEffect, useState } from "react";
-import { crawlWinePrices } from "../../api/wineApi";
-import { formatRelative, parseDateSafe } from "../../utils/dateTimeUtils";
+import { crawlWinePrices } from "../../../api/wineApi";
+import { formatRelative, parseDateSafe } from "../../../shared/utils/dateTimeUtils";
 import styles from "./PriceHistoryContent.module.css"; // PriceHistoryPopup 스타일 재사용
 
 
