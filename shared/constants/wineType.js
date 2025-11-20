@@ -1,0 +1,11 @@
+export const WineType = {
+    TYPE_RED: 0,
+    TYPE_WHITE: 1,
+    TYPE_ROSE: 2,
+    TYPE_ETC: 3,
+    TYPE_UNKNOWN: 10,
+    TYPE_RED_SPARKLING: 20,
+    TYPE_WHITE_SPARKLING: 21,
+    TYPE_ROSE_SPARKLING: 22,
+  };
+  

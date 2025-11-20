@@ -1,0 +1,35 @@
+# 루트/.gitignore
+
+# 패키지 매니저 종속 모듈
+/node_modules/
+**/node_modules/
+
+# 환경 변수 파일
+.env
+.env.*.local
+
+# Firebase 및 민감한 설정 파일
+**/firebase-adminsdk.json
+**/config/firebase-adminsdk.json
+
+# 빌드 결과물
+dist/
+build/
+coverage/
+**/build/
+**/dist/
+**/coverage/
+
+# 로그
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS 스펙
+.DS_Storeyarn.lock
+
+# workspace lockfiles (루트만 사용)
+client/package-lock.json
+server/package-lock.json
+client/package-lock.json

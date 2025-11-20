@@ -1,0 +1,9 @@
+:root {
+  --modal-w: 720px;
+  --modal-max-h: 90vh;
+  --modal-gap: 24px;
+  --modal-radius: 12px;
+  --modal-padding: 16px;
+  --overlay-bg: rgba(0,0,0,.35);
+  --modal-shadow: 0 10px 40px rgba(0,0,0,.18);
+}

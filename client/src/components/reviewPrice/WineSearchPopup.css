@@ -1,0 +1,678 @@
+.wine-search-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.wine-search-modal {
+  background: white;
+  border-radius: 8px;
+  padding: 0;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  outline: none;
+}
+
+.wine-search-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+.wine-search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.wine-search-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.wine-search-subtitle {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: #666;
+  font-weight: normal;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: #000;
+}
+
+.wine-search-input-section {
+  display: flex;
+  gap: 10px;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.wine-search-input {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  outline: none;
+}
+
+.wine-search-input:focus {
+  border-color: #007bff;
+}
+
+.wine-search-button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.wine-search-button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.wine-search-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.wine-search-loading {
+  padding: 16px 20px;
+  background-color: #e7f3ff;
+  color: #0066cc;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.wine-search-spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #e7f3ff;
+  border-top-color: #0066cc;
+  border-radius: 50%;
+  animation: wine-search-spin 0.8s linear infinite;
+}
+
+@keyframes wine-search-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.wine-search-cache-info {
+  padding: 8px 20px;
+  background-color: #f8f9fa;
+  color: #666;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.wine-search-error {
+  padding: 12px 20px;
+  background-color: #fee;
+  color: #c33;
+  font-size: 14px;
+}
+
+.wine-search-results {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px;
+  min-height: 0;
+  max-height: calc(80vh - 200px);
+}
+
+/* 스크롤바 스타일링 */
+.wine-search-results::-webkit-scrollbar {
+  width: 8px;
+}
+
+.wine-search-results::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.wine-search-results::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.wine-search-results::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.wine-search-results h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.wine-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.wine-item {
+  padding: 12px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  transition: background-color 0.2s;
+}
+
+.wine-item:hover {
+  background-color: #f8f9fa;
+}
+
+.wine-item-content {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.wine-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.wine-name-kr {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+.wine-name-en {
+  font-size: 13px;
+  color: #666;
+}
+
+.wine-name-fr,
+.wine-name-dutch {
+  font-size: 12px;
+  color: #999;
+  font-style: italic;
+}
+
+.wine-item-details {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.wine-detail-item {
+  font-size: 12px;
+  color: #007bff;
+  background-color: #e7f3ff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.wine-item-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.wine-detail-button {
+  padding: 6px 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.wine-detail-button:hover {
+  background-color: #0056b3;
+}
+
+.wine-details-expanded {
+  margin-top: 12px;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.wine-details-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  color: #666;
+  font-size: 14px;
+}
+
+.wine-details-content {
+  padding: 0;
+}
+
+.wine-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.wine-details-main {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+}
+
+.wine-details-thumbnail {
+  flex-shrink: 0;
+  width: 120px;
+  height: 160px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f5f5f5;
+  border: 1px solid #e9ecef;
+}
+
+.wine-details-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.wine-details-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wine-details-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.wine-details-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.wine-details-rating {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 14px;
+  min-width: 100%;
+}
+
+.rating-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.rating-score {
+  font-weight: 600;
+  color: #007bff;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.rating-source {
+  font-size: 12px;
+  color: #999;
+}
+
+.wine-details-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.sources-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.sources-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.source-link {
+  color: #007bff;
+  text-decoration: none;
+  padding: 4px 8px;
+  background-color: #e7f3ff;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.source-link:hover {
+  background-color: #cfe2ff;
+  text-decoration: underline;
+}
+
+.source-thumbnail {
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.wine-select-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.wine-select-button {
+  padding: 10px 20px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wine-select-button:hover {
+  background-color: #218838;
+}
+
+.dropdown-arrow {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.source-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  min-width: 200px;
+  max-width: 300px;
+  display: block;
+}
+
+.source-dropdown-header {
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+}
+
+.source-dropdown-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.source-dropdown-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.source-dropdown-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.source-dropdown-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.source-dropdown-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.source-dropdown-item {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 13px;
+  color: #333;
+}
+
+.source-dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.source-dropdown-item:first-child {
+  border-bottom: 1px solid #e9ecef;
+  font-weight: 500;
+}
+
+.source-dropdown-thumbnail {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.wine-details-section {
+  margin-bottom: 20px;
+}
+
+.wine-details-section h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.wine-details-section p {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.6;
+}
+
+.wine-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.info-item {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.info-item-full {
+  grid-column: 1 / -1;
+}
+
+.info-label {
+  font-weight: 500;
+  color: #666;
+  min-width: 70px;
+}
+
+.info-value {
+  color: #333;
+  flex: 1;
+}
+
+.food-pairing-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.food-pairing-item {
+  padding: 6px 12px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #333;
+}
+
+.sources-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.source-detail-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+}
+
+.source-detail-thumbnail {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: #fff;
+  border: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.source-detail-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.source-detail-info {
+  flex: 1;
+}
+
+.source-detail-link {
+  color: #007bff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.source-detail-link:hover {
+  text-decoration: underline;
+}
+
+/* 출처 태그 스타일 */
+.wine-details-sources-tags {
+  margin: 12px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.wine-details-sources-tags .sources-label {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-top: 4px;
+}
+
+.sources-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.source-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  font-size: 12px;
+  color: #555;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.source-tag:hover {
+  background-color: #e0e0e0;
+  border-color: #ccc;
+  color: #333;
+}
+

@@ -1,0 +1,65 @@
+/* src/components/containers/SingleModalContainer.module.css */
+
+:root{
+    --modal-w: 720px;
+    --modal-max-h: 90vh;
+    --modal-radius: 12px;
+    --modal-padding: 16px;
+    --overlay-bg: rgba(0,0,0,.35);
+    --modal-shadow: 0 10px 40px rgba(0,0,0,.18);
+  }
+  
+  .overlay{
+    position: fixed;
+    inset: 0;
+    background: var(--overlay-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+  
+  /* 모달 ‘콘텐츠’ 노드는 완전 무색/무취의 껍데기 */
+  .content{
+    position: static !important;
+    inset: unset !important;
+    padding: 0 !important;
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+  
+    /* 혹시 부모 flex 규칙 영향 받지 않도록 */
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+  
+  /* 실제 보이는 박스: 셸 */
+  .shell{
+    /* width: min(var(--modal-w), 96vw) !important;  ← 주석 처리 */
+    /* max-width: min(var(--modal-w), 96vw) !important; */
+    flex: 0 0 auto !important;
+    display: inline-block !important;
+    box-sizing: border-box;
+  
+    max-height: var(--modal-max-h);
+    background: #fff;
+    border-radius: var(--modal-radius);
+    box-shadow: var(--modal-shadow);
+    overflow: hidden;
+    animation: SingleModalContainer_slideUp__CiqOD .16s ease-out;
+  }
+  
+  /* 전체 스크롤은 안쪽에서만 */
+  .inner{
+    max-height: var(--modal-max-h);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: var(--modal-padding);
+  }
+  
+  @keyframes slideUp{
+    from{ transform: translateY(6px); opacity: .98; }
+    to{   transform: translateY(0);   opacity: 1;   }
+  }

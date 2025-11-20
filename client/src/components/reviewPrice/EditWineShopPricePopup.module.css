@@ -1,0 +1,486 @@
+/* 위치: src/components/reviewPrice/EditWineShopPricePopup.module.css */
+
+.popupOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popupContainer {
+  background: #fff;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 85%;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.popupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #eee;
+}
+
+.popupHeader h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.popupForm {
+  padding: 16px 24px;
+}
+
+.formRow {
+  margin-bottom: 16px;
+}
+
+.formRow label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.formRow input,
+.formRow textarea,
+.formRow select {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.formRow textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.formRowInline {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.formRowInline > div {
+  flex: 1;
+}
+
+.formRowInline label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.formRowInline input,
+.formRowInline select {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+/* ===== Suggestion List (와인, 와인샵, 할인수단) 공통 스타일 ===== */
+.suggestionList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  z-index: 1100;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.suggestionItem {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.suggestionItem:hover {
+  background-color: #f3f3f3;
+}
+
+/* ── 와인샵 제안 아이템 ── */
+.shopSuggestionItem {
+  display: flex;
+  align-items: center;
+}
+
+.shopName {
+  font-weight: 500;
+}
+
+.shopBranch {
+  font-size: 13px;
+  font-weight: 300;
+  color: #555;
+  margin-left: 4px;
+}
+
+/* ── 와인 제안 아이템 ── */
+.wineSuggestionItem {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.wineSuggestionThumbnailWrapper {
+  width: 28px;
+  height: 28px;
+  margin-right: 10px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.wineSuggestionThumb {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.wineSuggestionThumbPlaceholder {
+  background-color: #f0f0f0;
+  font-size: 8px;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  color: #666;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+}
+
+.wineSuggestionText {
+  display: flex;
+  flex-direction: column;
+}
+
+.wineNameKr {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.wineNameEn {
+  font-size: 12px;
+  color: #555;
+}
+
+/* ── 칩(Chip) 공통 스타일 ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  background: #f0f0f0;
+  border-radius: 16px;
+  padding: 4px 8px;
+  margin-bottom: 6px;
+}
+
+.chipRemove {
+  font-size: 12px;
+  margin-left: 4px;
+  cursor: pointer;
+}
+
+/* ── 와인샵 칩 ── */
+.shopChip {
+  font-size: 14px;
+  background: #e0f7fa;
+  color: #006064;
+}
+
+.shopChip .shopName {
+  font-weight: 500;
+}
+
+.shopChip .shopBranch {
+  font-size: 13px;
+  font-weight: 300;
+  color: #555;
+  margin-left: 4px;
+}
+
+/* ── 와인 칩 ── */
+.wineChip {
+  display: inline-flex;
+  align-items: center;
+  background: #f3e5f5;
+  color: #4a148c;
+}
+
+.wineChipThumb {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 3px;
+  margin-right: 6px;
+}
+
+.wineChipText {
+  display: flex;
+  flex-direction: column;
+}
+
+.wineChipKr {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.wineChipEn {
+  font-size: 11px;
+  color: #555;
+}
+
+/* 빈티지/용량 영역 */
+.vintageSizeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 0 16px 16px;
+  box-sizing: border-box;
+}
+
+.vintageSizeRow .formRow {
+  margin: 0;
+}
+
+.vintageSizeRow .formRow:first-child {
+  padding-left: 0;
+}
+
+.vintageSizeRow .formRow:last-child {
+  padding-right: 0;
+}
+
+/* 제출 버튼 영역 */
+.popupFooter {
+  border-top: 1px solid #eee;
+  padding: 12px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.submitBtn {
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 15px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin: 0;
+}
+
+/* ── 이력 보기 버튼 ── */
+.historyBtn {
+  margin-top: 6px;
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+}
+
+.historyBtn:hover {
+  text-decoration: underline;
+}
+
+/* ── 히스토리 목록 컨테이너 ── */
+.historyList {
+  position: absolute;
+  top: 76px;               /* textarea 바로 아래에 표시 */
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1002;
+  padding: 4px;
+}
+
+/* ── 로딩 및 빈 목록 안내 ── */
+.historyLoading,
+.historyEmpty {
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  padding: 8px 0;
+}
+
+/* ── 히스토리 개별 항목(CELL) ── */
+.historyItem {
+  display: flex;
+  padding: 6px 4px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.historyItem:last-child {
+  border-bottom: none;
+}
+
+/* ── 날짜 (작은 회색 글씨) ── */
+.historyItemDate {
+  font-size: 11px;
+  color: #999;
+  width: 50px;
+  flex-shrink: 0;
+}
+
+/* ── 코멘트 텍스트 (날짜보다 조금 큰 글씨) ── */
+.historyItemText {
+  font-size: 13px;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* '오늘로 갱신' 버튼 */
+.updateTodayBtn {
+  background: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.updateTodayBtn:hover {
+  background: #e6e6e6;
+}
+
+.writerInfo {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 2;
+  font-size: 14px;
+  color: #fff;
+}
+
+.wineIndex {
+  font-size: 12px;
+  color: #999;
+  margin-left: 8px;
+}
+
+/* 작성자 정보 옆 [변경] 버튼 */
+.changeWriterBtn {
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.changeWriterBtn:hover {
+  background-color: darken(var(--primary-color), 10%);
+}
+
+/* ── 할인 수단 헤더: label과 버튼을 좌우 정렬 ── */
+.discountHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.discountHeader label {
+  margin: 0;
+}
+
+/* 헤더 우측 버튼+결과 래퍼 */
+.rateWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* 할인 입력창 래퍼 (suggestion 위치 기준) */
+.discountField {
+  position: relative;
+  margin-top: 6px; /* 레이블-입력 간 간격 */
+}
+
+/* 환율 확인 버튼 */
+.rateCheckBtn {
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--primary-color);
+  padding: 0;
+}
+
+/* 환율 결과 */
+.rateResult {
+  font-size: 14px;
+  color: #333;
+}
+
+/* 할인 입력창 스타일 보장 */
+.discountField input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 와인 자동완성: '와인 추가하기' 버튼 */
+.addWineSuggestionItem {
+  padding: 10px 12px;
+  font-weight: 600;
+  color: var(--primary-color);
+  cursor: pointer;
+  border-top: 1px solid #eee;
+  background-color: #fff;
+  text-align: center;
+}
+
+.addWineSuggestionItem:hover {
+  background-color: #f3f3f3;
+}
+
+.rateError {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #d32f2f; /* 에러 빨강 */
+}

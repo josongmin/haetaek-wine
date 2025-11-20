@@ -1,0 +1,60 @@
+/* src/components/containers/TwinModalStage.module.css */
+:root{
+  --modal-max-h: 90vh;
+  --modal-gap: 24px;
+  --modal-radius: 12px;
+  --modal-padding: 16px;
+  --overlay-bg: rgba(0,0,0,.35);
+  --modal-shadow: 0 10px 40px rgba(0,0,0,.18);
+}
+
+.overlay{
+  position:fixed; inset:0;
+  background: var(--overlay-bg);
+  display:flex; align-items:center; justify-content:center;
+  z-index:999;
+}
+
+/* 항상 가로 배치. viewport가 좁으면 stage 자체에 가로 스크롤 생김 */
+.stage{
+  display:flex;
+  flex-wrap: nowrap;              /* 줄바꿈 금지 */
+  gap: var(--modal-gap);
+  align-items: flex-start;
+  background: transparent;
+
+  /* 가로 스크롤 */
+  max-width: 96vw;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.box{
+  position: relative;  
+  
+  /* 고정폭 유지 (뷰포트 좁으면 좌우 스크롤이 생김) */
+  width: var(--box-base, 480px);
+  min-width: var(--box-min, 360px);
+  flex: 0 0 var(--box-base, 480px);
+
+  max-height: var(--modal-max-h);
+  background:#fff;
+  border-radius: var(--modal-radius);
+  box-shadow: var(--modal-shadow);
+  overflow: hidden; /* 둥근 모서리 유지 */
+}
+
+.boxInner{
+  max-height: var(--modal-max-h);
+  overflow: auto;                       /* 각 박스는 내부 스크롤 */
+  -webkit-overflow-scrolling: touch;
+  padding: var(--modal-padding);
+}
+
+/* 아주 좁은 화면에서도 가로 스크롤을 유지하고 싶을 때는 미디어쿼리 불필요.
+   만약 모바일에서 세로 스택으로 바꾸고 싶다면 아래 주석 해제:
+@media (max-width: 900px){
+  .stage{ flex-direction: column; overflow-x: hidden; }
+  .box{ width: min(96vw, var(--box-base, 480px)); flex: 0 0 auto; }
+}
+*/

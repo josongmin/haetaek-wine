@@ -1,0 +1,662 @@
+
+/* === Wrapper === */
+.price-cell-wrapper {
+  margin-bottom: 16px;
+}
+
+/* === Registered Date === */
+.registered-date {
+  font-size: 12px;
+  color: #999;
+  margin-left: 4px;
+  margin-bottom: 4px;
+}
+
+/* === Meta Row (등록일 + 스위치) === */
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.switch-group-inline {
+  display: flex;
+  gap: 12px;
+}
+
+/* === Main Card === */
+.price-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background-color: #ffffff;
+  position: relative;
+}
+
+.card-top {
+  display: flex;
+  gap: 16px;
+}
+.price-card .card-top {
+  align-items: flex-start; /* 상단 영역들을 위쪽으로 붙여서 빈 공간이 생기게 */
+}
+
+/* === Status Badge === */
+.status-badge {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  font-size: 14px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-weight: bold;
+  cursor: pointer;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.status-badge.bottom {
+  position: absolute;
+  bottom: -1px;
+  right: 12px;
+  font-size: 14px;
+  padding: 8px 18px;
+  border-radius: 10px 10px 0 0;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* 거절 상태: 빨간 배경 + 흰 글씨 */
+.status-badge.rejected {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+}
+
+/* 삭제 상태: 회색 배경 + 흰 글씨 */
+.status-badge.deleted {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+}
+
+
+/* === Thumbnail Wrapper (원래대로) === */
+.photo-thumbnail {
+  background: none;                 /* 원형 배경 제거 */
+  border-radius: 0;                 /* 원이 아닌 사각 */
+  padding: 0;                       /* 추가 패딩 제거 */
+  box-shadow: none;                 /* 그림자 제거 */
+}
+
+/* === Thumbnail Image === */
+.photo-thumbnail img {
+  width: 80px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 6px;               /* 기존 이미지 모서리 둥글게 유지 */
+}
+
+.photo-thumbnail img.hidden::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+.attached-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.photo-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+
+.thumbnail-container {
+  width: 30px;
+  height: 64px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0px;
+}
+
+.thumbnail-container img,
+.thumbnail-placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.thumbnail-placeholder {
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.wine-names {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: 13.5px;
+  font-weight: bold;
+}
+
+.subtitle {
+  font-size: 11px;
+  color: #666;
+}
+
+/* === Middle Info === */
+.middle-info-group {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+}
+
+.middle-info-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.point {
+  font-size: 12px;
+  color: #999;
+  margin-top: 6px;
+}
+.sale-date,
+.point,
+.level {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 원화 표시 부분 앞 텍스트 (환율 →) */
+.price .currency {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 전체 price */
+.price {
+  font-weight: bold;
+}
+
+.sale {
+  font-size: 13px;
+  color: #555;
+}
+
+.purchase-link {
+  /* ← 핵심: flex 부모에서 늘리지 못하도록 막기 */
+  align-self: flex-start;
+
+  /* (디버깅용 배경 제거 후) 원하는 텍스트 스타일만 남겨둡니다 */
+  font-size: 12px;
+  color: #007bff;
+  text-decoration: underline;
+}
+
+/* === Writer Section === */
+.writer-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: 160px;
+}
+
+.nickname {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.level,
+.point {
+  font-size: 12px;
+  color: #999;
+}
+
+/* === Bottom Cards === */
+
+.card-row {
+  display: flex;
+  background-color: #f8f9fa;
+  gap: 16px;
+  margin: 0 13px 10px 13px;
+  padding: 12px 20px;
+  border-radius: 0 0 12px 12px;
+}
+/* 심사 필요(대기 or 선등록) 상태일 때만 primary 배경 */
+.card-row.review-required {
+  background-color: var(--primary-color);
+}
+
+/* === Common Highlight Box === */
+.highlight-box {
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+  padding: 0;
+}
+
+.highlight-primary {
+  border: 2px solid var(--primary-color);
+}
+
+.dialog-title {
+  font-size: 13px;      /* 살짝 키움 */
+  font-weight: bold;    /* 굵게 */
+  text-align: left;     /* 가운데보단 좌측 정렬이 보통 섹션 타이틀에 어울림 */
+    margin: 16px 0;
+}
+
+/* 구분선 */
+.separator {
+  width: 100%;
+  height: 1px;
+  background-color: #eee;
+  margin: 0;
+}
+
+/* 버튼 */
+.dialog-button {
+  width: 100%;
+  margin: 8px;
+  padding: 0;
+  font-size: 14px;
+  color: var(--primary-color);
+  background: none;
+  border: none;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* === Memo Input === */
+.memo-input {
+  flex: 1;
+  padding: 8px 12px;
+  margin: 6px 12px 10px 12px;
+  width: calc(100% - 24px);
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* === Segment Buttons === */
+.point-segment-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+}
+
+.segment-button {
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  background-color: white;
+  color: #333;
+  cursor: pointer;
+  transition: 0.2s;
+  border-right: none;
+  border-radius: 0;
+  margin: 0;
+}
+
+.segment-button:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.segment-button:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-right: 1px solid #ccc;
+}
+
+.segment-button.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* === Tag Buttons === */
+.tag-group {
+  display: flex;
+  gap: 0;
+  justify-content: center;
+}
+
+.tag-button {
+  border: 1px solid #ccc;
+  background: white;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  cursor: pointer;
+}
+
+.tag-button:hover {
+  background-color: #f0f0f0;
+}
+
+
+/* 스위치 */
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.switch-label {
+  font-size: 13px;
+  color: #333;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+
+.switch input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+  z-index: 2;
+}
+
+.slider {
+  position: absolute;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background-color: #ccc;
+  border-radius: 20px;
+  transition: 0.3s;
+}
+
+.slider:before {
+  content: "";
+  position: absolute;
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+.switch input:checked + .slider {
+  background-color: #4CAF50;
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(16px);
+}
+
+.switch.red-switch input:checked + .slider {
+  background-color: #dc3545;
+}
+
+.wine-info-and-photo-group {
+  display: flex;
+  flex-direction: column;
+  width: 240px;
+}
+
+/* === Wine Info Section === */
+.wine-info-section {
+  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #f6f6f6;
+  border-radius: 10px;
+  padding: 8px;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+}
+
+.photo-section-header {
+  display: flex;
+  justify-content: space-between; /* 제목은 좌측, 스위치 우측으로 */
+  align-items: center;
+  padding: 0px 8px;                   /* 위아래 여백 */
+  background-color: #f6f6f6;      /* 연한 회색 배경 */
+  border-bottom: 1px solid #eee;  /* 사진 영역과 구분선 */
+  border-top-left-radius: 8px;    /* 모서리 둥글게 */
+  border-top-right-radius: 8px;
+  height: 30px;
+}
+.photo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  background: none;               /* 사진 부분은 투명 */
+  border: 1px solid #eee;
+  border-radius: 8px;             /* header의 둥근 모서리와 이어지도록 */
+  overflow: hidden;               /* header와 사진이 한 박스처럼 */
+}
+.header-title {
+  font-size: 13px;
+  color: #333;
+}
+
+
+/* 드롭다운 */
+.dropdown-group {
+  margin-top: 16px;       /* 그룹 전체에 위쪽 여백 */
+  /* display: flex; */
+  gap: 8px;               /* dropdown-row 사이 간격은 그대로 유지 */
+}
+
+.dropdown {
+  padding: 3px 5px;
+  font-size: 11px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 50px;
+}
+
+.dropdown-row {
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.dropdown-label {
+  font-size: 12px;
+  color: #333;
+  width: 68px; 
+}
+
+.highlight-box.highlight-rejected {
+  border: 2px solid #dc3545;
+}
+
+.dialog-button.disabled {
+  color: #999;
+  cursor: not-allowed;
+}
+
+
+/* --- 사용자 레벨 영역 --- */
+/* 레벨 드롭다운 너비 축소 */
+.level-select {
+  width: 70px;      /* 원하는 너비로 조절 */
+  margin-right: 0px; /* 드롭다운 간 간격 */
+}
+
+.level-label {
+  font-size: 11px;
+  margin-top: 3px;
+  margin-bottom: 4px;
+  text-align: right;
+}
+
+/* 변경 버튼을 드롭다운들 아래에 내려 붙이기 */
+.level-dropdowns {
+  display: flex;
+  gap: 8px;          /* 드롭다운 사이 간격 */
+  justify-content: flex-end; 
+}
+
+.level-dropdowns select {
+  padding: 4px 4px;
+  font-size: 9px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* 버튼은 새로운 줄에서 */
+.level-save-button {
+  padding: 4px 14px;
+  font-size: 13px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.level-save-row {
+  display: flex;
+  justify-content: flex-end;  /* 버튼을 우측 끝에 */
+  width: 100%;
+  margin-top: 4px;
+}
+
+
+
+
+/* compare-button 절대 위치 */
+.compare-button {
+  position: absolute;
+  bottom: 12px;
+  right: 80px;    /* status-badge 와 겹치지 않도록 적절히 조절 */
+  padding: 4px 8px;
+  font-size: 0.875rem;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.compare-button:hover {
+  background-color: #e0e0e0;
+}
+
+.clone-button {
+  margin-top: 8px;
+  padding: 4px 8px;
+  font-size: 0.875rem;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.clone-button:hover {
+  background-color: #e0e0e0;
+}
+
+
+/* 텍스트만 클릭 영역이 되도록 */
+.middle-info-section .shop {
+  display: inline-flex;
+  width: fit-content;
+  gap: 4px;
+  align-items: baseline;
+  cursor: pointer;
+}
+
+.middle-info-section .shop:hover {
+  text-decoration: underline;
+}
+
+.box-header {
+  display: flex;
+  flex-direction: column; /* 좌우 → 상하 */
+  gap: 6px;              /* 버튼 간격 */
+  margin-top: 8px;       /* 위쪽 여백 */
+  align-items: flex-end; /* 우측 정렬 원하면 유지 */
+}
+
+
+/* 타이틀 + 스위치 한 줄 배치 */
+.dialog-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;   /* 좌우 살짝 여백 */
+}
+
+.push-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.push-toggle__label {
+  font-size: 12px;
+  color: #333;
+}
+
+/* 작은 스위치 */
+.switch.small {
+  width: 32px;
+  height: 18px;
+}
+
+.switch.small .slider:before {
+  height: 12px;
+  width: 12px;
+  left: 3px;
+  bottom: 3px;
+}
+
+.switch.small input:checked + .slider:before {
+  transform: translateX(14px);
+}

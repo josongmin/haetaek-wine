@@ -1,0 +1,335 @@
+.ai-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 5vh;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease-out;
+  overflow-y: auto;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.ai-modal-content {
+  width: 90%;
+  max-width: 600px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+  margin-bottom: 5vh;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0.9;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.ai-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.ai-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.ai-modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.ai-modal-close:hover {
+  color: #333;
+}
+
+.ai-modal-body {
+  padding: 24px;
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
+
+.ai-modal-input-wrapper {
+  position: relative;
+}
+
+.ai-modal-input {
+  width: 100%;
+  padding: 16px;
+  font-size: 15px;
+  line-height: 1.6;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  box-sizing: border-box;
+  resize: vertical;
+  transition: min-height 0.3s ease;
+}
+
+textarea.ai-modal-input {
+  min-height: 200px;
+}
+
+.ai-modal-input:focus {
+  outline: none;
+  border-color: #7c4dff;
+  box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.1);
+}
+
+.ai-modal-input::placeholder {
+  color: #999;
+}
+
+.ai-modal-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+}
+
+.ai-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #7c4dff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.ai-wine-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  width: 100%;
+}
+
+.ai-wine-tabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.ai-wine-tabs::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.ai-wine-tabs::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 2px;
+}
+
+.ai-wine-tab {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.ai-wine-tab:hover {
+  background: #eeeeee;
+  border-color: #d0d0d0;
+}
+
+.ai-wine-tab-active {
+  color: #7c4dff;
+  background: #f3e5f5;
+  border-color: #7c4dff;
+  box-shadow: 0 2px 4px rgba(124, 77, 255, 0.2);
+}
+
+.ai-wine-tab-active:hover {
+  background: #ede7f6;
+  border-color: #6a1b9a;
+}
+
+.ai-modal-footer {
+  padding: 16px 24px 24px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ai-modal-search-button {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #7c4dff 0%, #9c27ff 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.ai-magic-wand-icon {
+  font-size: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: wandGlow 2s ease-in-out infinite, wandFloat 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+}
+
+.ai-wand-spinning {
+  animation: wandSpin 1s linear infinite, wandGlow 1s ease-in-out infinite;
+}
+
+.ai-magic-wand-icon-disabled {
+  font-size: 18px;
+  display: inline-block;
+  opacity: 0.5;
+}
+
+@keyframes wandGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba(255, 255, 255, 1)) drop-shadow(0 0 24px rgba(124, 77, 255, 0.8));
+    transform: scale(1.1);
+  }
+}
+
+@keyframes wandFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-3px) rotate(-5deg);
+  }
+  50% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-2px) rotate(5deg);
+  }
+}
+
+@keyframes wandSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.ai-modal-search-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 77, 255, 0.3);
+}
+
+.ai-modal-search-button:active {
+  transform: translateY(0);
+}
+
+.ai-modal-search-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 마법 애니메이션 */
+.ai-magic-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 2001;
+  overflow: hidden;
+}
+
+.ai-magic-sparkles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.ai-sparkle {
+  position: absolute;
+  font-size: 24px;
+  animation: sparkleFloat 2s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes sparkleFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-20px) scale(1) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100px) scale(0.5) rotate(360deg);
+  }
+}
+
