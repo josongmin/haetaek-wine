@@ -7,58 +7,60 @@ import {
 
 /**
  * 주어진 사용자(userIndex)가 지난 N일(days) 동안 등록한
- * “특가” 개수를 반환합니다.
+ * "특가" 개수를 반환합니다.
  * 
  * @param {string} userIndex            조회할 사용자 인덱스
  * @param {number|null|undefined} days   조회 기간(일 단위). null 또는 <= 0 이면 전체 기간으로 조회.
- * @returns {Promise<number>}            특가 개수 (오류 시 -1 리턴)
+ * @returns {Promise<number>}            특가 개수
+ * @throws {Error}                       DB 조회 실패 시
  */
 export const getHotDealCount = async (userIndex, days) => {
-  try {
-    let sql, params;
-    if (typeof days === 'number' && days > 0) {
-      // days > 0인 경우에만 날짜 필터를 적용
-      sql = `
-        SELECT
-          COUNT(WP.WPR_index) AS count
-        FROM
-          WinePrice AS WP
-          LEFT JOIN (
-            SELECT *
-            FROM PointHistory
-            WHERE PHI_activityTypeIndex = 11
-          ) AS PH ON PH.PHI_foreignKey = WP.WPR_index
-          LEFT JOIN WineShop AS WS ON WS.WSH_index = WP.WPR_shopIndex
-          LEFT JOIN Wine AS W ON W.WIN_index = WP.WPR_wineIndex
-        WHERE
-          WP.WPR_writerIndex = ?
-          AND (WP.WPR_showSpecialPricePage = 1 OR IFNULL(PH.PHI_point, 0) >= 3)
-          AND WP.WPR_datetime >= DATE_SUB(NOW(), INTERVAL ? DAY)
-          AND WP.WPR_status = ?
-      `;
-      params = [userIndex, days, PRICE_STATUS_PASS];
-    } else {
-      // days가 null 또는 <= 0인 경우: 전체 기간 조회 (날짜 필터 제외)
-      sql = `
-        SELECT
-          COUNT(WP.WPR_index) AS count
-        FROM
-          WinePrice AS WP
-          LEFT JOIN (
-            SELECT *
-            FROM PointHistory
-            WHERE PHI_activityTypeIndex = 11
-          ) AS PH ON PH.PHI_foreignKey = WP.WPR_index
-          LEFT JOIN WineShop AS WS ON WS.WSH_index = WP.WPR_shopIndex
-          LEFT JOIN Wine AS W ON W.WIN_index = WP.WPR_wineIndex
-        WHERE
-          WP.WPR_writerIndex = ?
-          AND (WP.WPR_showSpecialPricePage = 1 OR IFNULL(PH.PHI_point, 0) >= 3)
-          AND WP.WPR_status = ?
-      `;
-      params = [userIndex, PRICE_STATUS_PASS];
-    }
+  let sql, params;
+  
+  if (typeof days === 'number' && days > 0) {
+    // days > 0인 경우에만 날짜 필터를 적용
+    sql = `
+      SELECT
+        COUNT(WP.WPR_index) AS count
+      FROM
+        WinePrice AS WP
+        LEFT JOIN (
+          SELECT *
+          FROM PointHistory
+          WHERE PHI_activityTypeIndex = 11
+        ) AS PH ON PH.PHI_foreignKey = WP.WPR_index
+        LEFT JOIN WineShop AS WS ON WS.WSH_index = WP.WPR_shopIndex
+        LEFT JOIN Wine AS W ON W.WIN_index = WP.WPR_wineIndex
+      WHERE
+        WP.WPR_writerIndex = ?
+        AND (WP.WPR_showSpecialPricePage = 1 OR IFNULL(PH.PHI_point, 0) >= 3)
+        AND WP.WPR_datetime >= DATE_SUB(NOW(), INTERVAL ? DAY)
+        AND WP.WPR_status = ?
+    `;
+    params = [userIndex, days, PRICE_STATUS_PASS];
+  } else {
+    // days가 null 또는 <= 0인 경우: 전체 기간 조회 (날짜 필터 제외)
+    sql = `
+      SELECT
+        COUNT(WP.WPR_index) AS count
+      FROM
+        WinePrice AS WP
+        LEFT JOIN (
+          SELECT *
+          FROM PointHistory
+          WHERE PHI_activityTypeIndex = 11
+        ) AS PH ON PH.PHI_foreignKey = WP.WPR_index
+        LEFT JOIN WineShop AS WS ON WS.WSH_index = WP.WPR_shopIndex
+        LEFT JOIN Wine AS W ON W.WIN_index = WP.WPR_wineIndex
+      WHERE
+        WP.WPR_writerIndex = ?
+        AND (WP.WPR_showSpecialPricePage = 1 OR IFNULL(PH.PHI_point, 0) >= 3)
+        AND WP.WPR_status = ?
+    `;
+    params = [userIndex, PRICE_STATUS_PASS];
+  }
 
+  try {
     const [rows] = await db.query(sql, params);
 
     if (!rows || rows.length === 0) {
@@ -68,8 +70,8 @@ export const getHotDealCount = async (userIndex, days) => {
     const countValue = rows[0].count;
     return countValue != null ? Number(countValue) : 0;
   } catch (err) {
-    console.error('getHotDealCountOfUser error:', err);
-    return -1;
+    console.error('[getHotDealCount] 특가 개수 조회 실패:', err);
+    throw err;
   }
 };
 
