@@ -133,21 +133,14 @@ export const changeReviewStatus = async (status, winePriceIndex, point = null) =
   }
 };
 export const changeWriter = async (winePriceIndex, writerIndex) => {
-  let setClauses = ['WPR_writerIndex = ?'];
-  const params = [writerIndex];
-
-
-  // WHERE 조건
-  params.push(winePriceIndex);
-
   const sql = `
     UPDATE WinePrice
-    SET ${setClauses.join(', ')}
+    SET WPR_writerIndex = ?
     WHERE WPR_index = ?
   `;
 
   try {
-    const [result] = await db.query(sql, params);
+    const [result] = await db.query(sql, [writerIndex, winePriceIndex]);
     return result.affectedRows;
   } catch (err) {
     console.error('changeWriter 오류:', err);

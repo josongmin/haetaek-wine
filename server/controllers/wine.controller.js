@@ -1,6 +1,6 @@
 // controllers/wine.controller.js
 import { getWinePriceListContainWineInfo as fetchWinePriceList, deleteWithRelatedData, changeWriter } from '../dao/winePrice.dao.js';
-import { getAttachedPhotosByWinePriceIndex } from '../dao/winePhoto.dao.js';
+import { getAttachedPhotosByWinePriceIndex, getAttachedPhotosByWinePriceIndices } from '../dao/winePhoto.dao.js';
 import { changeWineStatus, changeWineStatusToIncompleteIfNotPass } from '../dao/wine.dao.js';
 import { changePhotoType } from '../dao/winePhoto.dao.js';
 import { changeReviewStatus, setShowInSpecialPricePage, setShowInWineDetailPage, setStockCount, setNeededPointForShow, setHasReceipt } from '../dao/winePrice.dao.js';
@@ -15,33 +15,6 @@ import {
 
 const isTrue = v => v === true || v === 'true';
 
-// export const getWinePriceList = async (req, res) => {
-//   try {
-//     const data = await fetchWinePriceList(req.query);
-
-//     const mapped = await Promise.all(
-//       data.map(async (row) => {
-//         const photos = await getAttachedPhotosByWinePriceIndex(row.WPR_index);
-//         return {
-//           ...row,
-//           writer: {
-//             index: row.USR_index,
-//             nickname: row.USR_nickname,
-//             level: row.USR_level,
-//             point: row.USR_point,
-//             thumbnailURL: row.USR_thumbnailURL,
-//           },
-//           attachedPhotos: photos || [],
-//         };
-//       })
-//     );
-
-//     res.json({ success: true, mapped });
-//   } catch (err) {
-//     console.error('Error:', err);
-//     res.status(500).json({ success: false, error: err.message });
-//   }
-// };
 export const getWinePriceList = async (req, res) => {
   try {
     // 1) status 파라미터 파싱
@@ -91,28 +64,33 @@ export const getWinePriceList = async (req, res) => {
 
     const data = await fetchWinePriceList(filters);
 
-    const mapped = await Promise.all(
-      data.map(async (row) => {
-        const photos = await getAttachedPhotosByWinePriceIndex(row.WPR_index);
-        return {
-          ...row,
-          writer: {
-            index: row.USR_index,
-            id: row.USR_id,
-            nickname: row.USR_nickname,
-            level: row.USR_level,
-            point: row.USR_point,
-            thumbnailURL: row.USR_thumbnailURL,
-          },
-          attachedPhotos: photos || [],
-        };
-      })
-    );
+    // N+1 문제 해결: 모든 사진을 한 번에 조회
+    const priceIndices = data.map(row => row.WPR_index);
+    const photosByPriceIndex = await getAttachedPhotosByWinePriceIndices(priceIndices);
 
-    res.json({ success: true, mapped });
+    const mapped = data.map((row) => {
+      return {
+        ...row,
+        writer: {
+          index: row.USR_index,
+          id: row.USR_id,
+          nickname: row.USR_nickname,
+          level: row.USR_level,
+          point: row.USR_point,
+          thumbnailURL: row.USR_thumbnailURL,
+        },
+        attachedPhotos: photosByPriceIndex[row.WPR_index] || [],
+      };
+    });
+
+    res.json({ success: true, data: mapped });
   } catch (err) {
-    console.error('Error:', err);
-    res.status(500).json({ success: false, error: err.message });
+    console.error('[getWinePriceList] 가격 목록 조회 실패:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '가격 목록을 불러오는데 실패했습니다.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 
@@ -127,8 +105,12 @@ export const changePhotoStatus = async (req, res) => {
     const result = await changePhotoType(status, photoIndex);
     res.json({ success: result > 0 });
   } catch (err) {
-    console.error('changePhotoStatus error:', err);
-    res.status(500).json({ success: false, message: err.message });
+    console.error('[changePhotoStatus] 사진 상태 변경 실패:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '사진 상태를 변경하는데 실패했습니다.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 
@@ -138,7 +120,12 @@ export const updatePriceStatus = async (req, res) => {
     const result = await changeReviewStatus(status, winePriceIndex, point);
     res.json({ success: true, updated: result });
   } catch (err) {
-    res.status(500).json({ success: false, message: '업데이트 실패' });
+    console.error('[updatePriceStatus] 가격 상태 업데이트 실패:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '가격 상태를 업데이트하는데 실패했습니다.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 export const updatePriceWriter = async (req, res) => {
@@ -147,7 +134,12 @@ export const updatePriceWriter = async (req, res) => {
     const result = await changeWriter(winePriceIndex, writerIndex);
     res.json({ success: true, updated: result });
   } catch (err) {
-    res.status(500).json({ success: false, message: '업데이트 실패' });
+    console.error('[updatePriceWriter] 작성자 변경 실패:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '작성자를 변경하는데 실패했습니다.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 
@@ -157,43 +149,72 @@ export const setShowInSpecialPricePageOfPrice = async (req, res) => {
     const result = await setShowInSpecialPricePage(show, winePriceIndex);
     res.json({ success: true, updated: result });
   } catch (err) {
-    res.status(500).json({ success: false, message: '업데이트 실패' });
+    console.error('[setShowInSpecialPricePageOfPrice] 특가 페이지 노출 설정 실패:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '특가 페이지 노출 설정에 실패했습니다.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
+
 export const setShowInWineDetailPageOfPrice = async (req, res) => {
   const { show, winePriceIndex } = req.body;
   try {
     const result = await setShowInWineDetailPage(show, winePriceIndex);
     res.json({ success: true, updated: result });
   } catch (err) {
-    res.status(500).json({ success: false, message: '업데이트 실패' });
+    console.error('[setShowInWineDetailPageOfPrice] 상세 페이지 노출 설정 실패:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '상세 페이지 노출 설정에 실패했습니다.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
+
 export const setStockCountOfPrice = async (req, res) => {
   const { stockCount, winePriceIndex } = req.body;
   try {
     const result = await setStockCount(stockCount, winePriceIndex);
     res.json({ success: true, updated: result });
   } catch (err) {
-    res.status(500).json({ success: false, message: '업데이트 실패' });
+    console.error('[setStockCountOfPrice] 재고 수량 설정 실패:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '재고 수량을 설정하는데 실패했습니다.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
+
 export const setNeededPointForShowOfPrice = async (req, res) => {
   const { point, winePriceIndex } = req.body;
   try {
     const result = await setNeededPointForShow(point, winePriceIndex);
     res.json({ success: true, updated: result });
   } catch (err) {
-    res.status(500).json({ success: false, message: '업데이트 실패' });
+    console.error('[setNeededPointForShowOfPrice] 필요 포인트 설정 실패:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '필요 포인트를 설정하는데 실패했습니다.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
+
 export const setHasReceiptOfPrice = async (req, res) => {
   const { hasReceipt, winePriceIndex } = req.body;
   try {
     const result = await setHasReceipt(hasReceipt, winePriceIndex);
     res.json({ success: true, updated: result });
   } catch (err) {
-    res.status(500).json({ success: false, message: '업데이트 실패' });
+    console.error('[setHasReceiptOfPrice] 영수증 여부 설정 실패:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '영수증 여부를 설정하는데 실패했습니다.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 
@@ -203,18 +224,14 @@ export const deletePriceWithRelatedData = async (req, res) => {
     const result = await deleteWithRelatedData(priceIndex, wineIndex);
     res.json({ success: true, updated: result });
   } catch (err) {
-    res.status(500).json({ success: false, message: '삭제 실패' });
+    console.error('[deletePriceWithRelatedData] 가격 및 관련 데이터 삭제 실패:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '가격 및 관련 데이터를 삭제하는데 실패했습니다.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
-// export const updatePrice = async (req, res) => {
-//   const { status, winePriceIndex, point } = req.body;
-//   try {
-//     const result = await changeReviewStatus(status, winePriceIndex, point);
-//     res.json({ success: true, updated: result });
-//   } catch (err) {
-//     res.status(500).json({ success: false, message: '업데이트 실패' });
-//   }
-// };
 
 export const updateWineStatus = async (req, res) => {
   const { status, wineIndex } = req.body;
@@ -222,7 +239,12 @@ export const updateWineStatus = async (req, res) => {
     const result = await changeWineStatus(wineIndex, status);
     res.json({ success: true, updated: result });
   } catch (err) {
-    res.status(500).json({ success: false, message: '업데이트 실패' });
+    console.error('[updateWineStatus] 와인 상태 업데이트 실패:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '와인 상태를 업데이트하는데 실패했습니다.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };
 
@@ -232,6 +254,11 @@ export const updateWineStatusToIncompleteIfNotPass = async (req, res) => {
     const result = await changeWineStatusToIncompleteIfNotPass(wineIndex);
     res.json({ success: true, updated: result });
   } catch (err) {
-    res.status(500).json({ success: false, message: '업데이트 실패' });
+    console.error('[updateWineStatusToIncompleteIfNotPass] 와인 상태를 미완료로 변경 실패:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: '와인 상태를 미완료로 변경하는데 실패했습니다.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 };

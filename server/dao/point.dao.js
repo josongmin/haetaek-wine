@@ -110,32 +110,3 @@ export const deleteWithSyncUserPoint = async (userIndex, index) => {
     conn.release();
   }
 };
-
-export const deletePriceWithSyncUserPoint = async (priceIndex, index) => {
-  const conn = await db.getConnection();
-
-  try {
-    await conn.beginTransaction();
-
-    // 1. PointHistory delete
-    const sql = `
-      DELETE FROM   PointHistory 
-      WHERE         PHI_activityTypeIndex = 11 AND PHI_foreignKey = ?
-    `;
-    const [deleteResult] = await conn.query(sql, [
-      priceIndex
-    ]);
-
-    // 2. User 포인트 업데이트
-    const updateResult = await syncUserPoint(conn, userIndex);
-
-    await conn.commit();
-
-    return deleteResult.affectedRows + updateResult.affectedRows;
-  } catch (err) {
-    await conn.rollback();
-    throw err;
-  } finally {
-    conn.release();
-  }
-};

@@ -21,35 +21,17 @@ export const getUsedDiscountHistoryListOfShop = async (req, res) => {
   try {
     const { shopIndex } = req.body;
 
-    // if (!accessToken || !accessToken.includes('1234qwer')) {
-    //   return res.status(403).json({ success: false, message: 'Access denied' });
-    // }
-
     const result = await getUsedDiscountHistoryList(shopIndex);
     res.json({ success: true, data: result });
   } catch (err) {
-    console.error('changePhotoStatus error:', err);
+    console.error('getUsedDiscountHistoryListOfShop error:', err);
     res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-export const updatePriceStatus = async (req, res) => {
-  const { status, winePriceIndex, point } = req.body;
-  try {
-    const result = await changeReviewStatus(status, winePriceIndex, point);
-    res.json({ success: true, updated: result });
-  } catch (err) {
-    res.status(500).json({ success: false, message: '업데이트 실패' });
   }
 };
 
 export const getCommentHistoryListOfShop = async (req, res) => {
   try {
     const { shopIndex } = req.body;
-
-    // if (!accessToken || !accessToken.includes('1234qwer')) {
-    //   return res.status(403).json({ success: false, message: 'Access denied' });
-    // }
 
     const result = await getCommentHistoryList(shopIndex);
     res.json({ success: true, data: result });

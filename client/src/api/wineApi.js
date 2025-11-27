@@ -102,15 +102,6 @@ export const mergeWine = async (wineIndexFrom, wineIndexTo, user) => {
 };
 
 // post 로 보낼 경우
-// export const fetchWinePrices = async (filters) => {
-//   try {
-//     const res = await axios.post('/wine/priceList', filters);
-//     return res.data.mapped;
-//   } catch (e) {
-//     console.error('API fetch error', e);
-//     return [];
-//   }
-// };
 
 export const searchWines = async (user, cleanedSearchText, loadRowCount = 40) => {
   try {
@@ -246,7 +237,7 @@ export async function fetchWineByIndex(wineIndex, user) {
 export const fetchWinePrices = async (filters) => {
   try {
     const res = await axios.get('/wine/priceList', { params: filters });
-    return res.data.mapped;  // 서버에서 mapped로 리턴함
+    return res.data.data;  // 통일된 응답 구조 사용
   } catch (e) {
     console.error('API fetch error', e);
     return [];

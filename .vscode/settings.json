@@ -4,6 +4,7 @@
     "**/.vscode": true,
     "**/pnpm-store": true,
     "**/.cursorignore": true,
+    "**/.cursor": true,
     "**/package-lock.json": true
   }
 }

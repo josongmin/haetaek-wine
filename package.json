@@ -9,6 +9,7 @@
     "dev": "npm run start --workspace=server",
     "start:server": "npm run start --workspace=server",
     "start:client": "npm run start --workspace=client",
+    "build": "npm run build:client",
     "build:client": "npm -w client ci && npm -w client run build",
     "deploy": "pm2 stop admin-api || true && npm ci --ignore-scripts && npm run build:client && pm2 start admin-api"
   },
