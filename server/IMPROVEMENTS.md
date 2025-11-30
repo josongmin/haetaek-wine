@@ -324,3 +324,4 @@ export const getHotDealCount = async (userIndex, days) => {
 보안 관련 하드코딩 이슈는 `TODO_SECURITY.md`에 상세히 정리되어 있으며, 
 다음 단계로 우선순위에 따라 처리하시면 됩니다.
 
+

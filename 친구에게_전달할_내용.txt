@@ -1,0 +1,116 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  친구에게 전달할 AWS 배포 정보 요약
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+안녕! AWS 배포 부탁하려고 정보 정리했어.
+
+━━━ EC2 서버 정보 ━━━
+
+서버 주소: 13.124.222.92
+또는: ec2-13-124-222-92.ap-northeast-2.compute.amazonaws.com
+
+인스턴스 타입: t2.micro (1GB RAM)
+OS: Ubuntu 24.04 LTS
+리전: 서울 (ap-northeast-2)
+
+SSH 접속:
+ssh -i "키파일.pem" ubuntu@13.124.222.92
+
+━━━ 내가 추가로 줘야할 정보 ━━━
+
+□ SSH 키 파일 (.pem) - 안전하게 전달할게
+□ 데이터베이스 접속 정보 (RDS 엔드포인트, 비밀번호 등)
+□ Firebase Admin SDK JSON 파일
+□ 환경 변수 (.env) - secrets-template.txt 작성해서 줄게
+□ GitHub 저장소 Collaborator 권한 추가
+□ 도메인 정보 (있으면)
+
+━━━ 배포할 프로젝트 ━━━
+
+프로젝트명: wine-admin
+구조: 
+  - 프론트엔드: React (Vite)
+  - 백엔드: Node.js + Express
+  - DB: MySQL
+
+포트: 3000
+
+━━━ 작업 내용 ━━━
+
+1. 서버에 Node.js, Git, PM2 설치
+2. 프로젝트 클론 또는 파일 업로드
+3. 환경 변수 설정
+4. 빌드 및 실행
+5. Nginx 리버스 프록시 설정 (선택)
+6. SSL 인증서 설정 (선택)
+
+예상 시간: 1-2시간
+
+━━━ 참고 문서 ━━━
+
+프로젝트 폴더에 준비해놨어:
+
+1. AWS_INSTANCE_INFO.md
+   → EC2 정보와 상세한 배포 가이드
+
+2. DEPLOYMENT_INFO.md
+   → 전체 배포 정보 (체크리스트)
+
+3. CICD_SETUP.md
+   → 단계별 설정 가이드
+
+4. AWS_DEPLOYMENT_GUIDE.md
+   → 상세한 AWS 설정 방법
+
+5. secrets-template.txt
+   → 이거 작성해서 안전하게 줄게
+
+6. scripts/ 폴더
+   - deploy.sh: 배포 스크립트
+   - setup-pm2.sh: PM2 설정
+   - rollback.sh: 롤백
+
+━━━ 보안 그룹 설정 필요 ━━━
+
+AWS Console에서 설정해야 할 것:
+
+인바운드 규칙:
+- 포트 22 (SSH): 네 IP만
+- 포트 80 (HTTP): 모든 IP
+- 포트 443 (HTTPS): 모든 IP
+
+━━━ 확인 사항 ━━━
+
+배포 완료 후:
+- http://13.124.222.92/health 접속해서 
+  {"status":"ok"} 응답 나오면 성공!
+
+- 로그 확인: pm2 logs admin-api
+
+━━━ 추가 질문 ━━━
+
+1. CI/CD 자동 배포 원해? (GitHub Actions)
+   Yes면 GitHub Secrets 설정 필요
+
+2. 도메인 연결할 거야? (예: admin.example.com)
+   Yes면 DNS 설정 권한 필요
+
+3. HTTPS 설정할 거야?
+   Yes면 Let's Encrypt로 무료 인증서 발급 가능
+
+━━━ 다음 단계 ━━━
+
+1. 내가 secrets-template.txt 작성할게
+2. SSH 키 파일 안전하게 전달할게
+   (1Password나 직접 전달)
+3. 필요한 파일들 정리해줄게
+4. 배포 시작!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+궁금한 거나 필요한 정보 더 있으면 말해줘!
+
+작업 전에 위 문서들 한번 읽어보면 도움 될 거야.
+특히 AWS_INSTANCE_INFO.md가 가장 중요해!
+
+

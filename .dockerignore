@@ -1,0 +1,39 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+.env.local
+.env.*.local
+
+# 빌드 결과물 (도커 내에서 다시 빌드)
+client/build
+server/dist
+dist
+coverage
+
+# 개발 파일
+*.md
+.vscode
+.idea
+.DS_Store
+
+# 테스트
+**/*.test.js
+**/*.test.ts
+**/__tests__
+**/tests
+jest.config.js
+
+# 문서
+*.md
+docs/
+
+# CI/CD
+.github
+.gitlab-ci.yml
+buildspec.yml
+Dockerfile
+.dockerignore
+
+

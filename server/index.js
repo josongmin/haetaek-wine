@@ -36,6 +36,11 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ⬇️ 헬스체크 엔드포인트 (CI/CD 및 로드 밸런서용)
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // ⬇️ API 라우트 (그대로 유지)
 app.use('/wine', wineRoutes);
 app.use('/point', pointRoutes);

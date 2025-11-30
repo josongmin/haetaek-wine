@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # MySQL 데이터베이스
+  db:
+    image: mysql:8.0
+    container_name: wine-admin-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-wine_admin}
+      MYSQL_USER: ${DB_USER:-wineuser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-winepassword}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./server/config/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - wine-admin-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 애플리케이션 서버
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wine-admin-app
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-wineuser}
+      DB_PASSWORD: ${DB_PASSWORD:-winepassword}
+      DB_NAME: ${DB_NAME:-wine_admin}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Firebase 설정 파일 마운트 (로컬에서만)
+      - ./server/config/firebase-adminsdk.json:/app/server/config/firebase-adminsdk.json:ro
+    networks:
+      - wine-admin-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # Nginx 리버스 프록시 (선택사항)
+  nginx:
+    image: nginx:alpine
+    container_name: wine-admin-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - wine-admin-network
+
+networks:
+  wine-admin-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+
+
