@@ -1,21 +1,37 @@
-// controllers/external_wine_search.controller.js
+// controllers/external_wine_search.controller.ts
+import type { Request, Response } from 'express';
 import fetch from 'node-fetch';
 
 // 메모리 캐시 (간단한 구현)
-const searchCache = new Map();
+interface CacheEntry {
+  data: WineSuggestion[];
+  timestamp: number;
+}
+
+const searchCache = new Map<string, CacheEntry>();
 const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7일
+
+interface WineSuggestion {
+  kr_name: string;
+  en_name: string;
+  fr_name?: string | null;
+  dutch_name?: string | null;
+  thumbnail_url?: string | null;
+  vintage?: string | null;
+  confidence?: 'high' | 'medium' | 'low';
+}
 
 /**
  * 한글이 포함되어 있는지 확인
  */
-function containsKorean(text) {
+function containsKorean(text: string): boolean {
   return /[가-힣]/.test(text);
 }
 
 /**
  * 한글 키워드 정규화 (띄어쓰기, 외래어 표기 통일)
  */
-function normalizeKoreanKeyword(keyword) {
+function normalizeKoreanKeyword(keyword: string): string {
   if (!keyword) return '';
   
   return keyword
@@ -36,14 +52,14 @@ function normalizeKoreanKeyword(keyword) {
 /**
  * 안전한 URL 디코딩 (잘못된 바이트 시퀀스 처리)
  */
-function safeDecodeURIComponent(str) {
+function safeDecodeURIComponent(str: string): string {
   try {
     return decodeURIComponent(str.replace(/\+/g, ' '));
   } catch (e) {
     // 잘못된 인코딩이 있는 경우, 부분적으로 디코딩 시도
     try {
       // 정규식으로 유효한 인코딩만 디코딩
-      return str.replace(/%([0-9A-F]{2})/gi, (match, hex) => {
+      return str.replace(/%([0-9A-F]{2})/gi, (match: string) => {
         try {
           return decodeURIComponent(match);
         } catch {
@@ -60,14 +76,14 @@ function safeDecodeURIComponent(str) {
 /**
  * 캐시 키 생성 (정규화된 키워드 사용)
  */
-function getCacheKey(keyword) {
+function getCacheKey(keyword: string): string {
   return normalizeKoreanKeyword(keyword);
 }
 
 /**
  * 캐시에서 검색 결과 조회
  */
-function getCachedResult(keyword) {
+function getCachedResult(keyword: string): WineSuggestion[] | null {
   const cacheKey = getCacheKey(keyword);
   const cached = searchCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -79,7 +95,7 @@ function getCachedResult(keyword) {
 /**
  * 검색 결과를 캐시에 저장
  */
-function setCachedResult(keyword, wines) {
+function setCachedResult(keyword: string, wines: WineSuggestion[]): void {
   const cacheKey = getCacheKey(keyword);
   searchCache.set(cacheKey, {
     data: wines,
@@ -90,7 +106,7 @@ function setCachedResult(keyword, wines) {
 /**
  * 캐시에서 특정 키워드 삭제
  */
-function deleteCachedResult(keyword) {
+function deleteCachedResult(keyword: string): void {
   const cacheKey = getCacheKey(keyword);
   searchCache.delete(cacheKey);
   console.log(`캐시 삭제: ${keyword} (정규화된 키: ${cacheKey})`);
@@ -129,12 +145,12 @@ const GRAPE_OPTIONS = [
  * 포도품종 매핑 함수
  * API에서 받은 포도품종을 하드코딩된 목록과 매칭
  */
-function mapGrapeVarieties(grapeVarieties) {
+function mapGrapeVarieties(grapeVarieties: unknown): string[] {
   if (!Array.isArray(grapeVarieties) || grapeVarieties.length === 0) {
     return [];
   }
 
-  const mapped = [];
+  const mapped: string[] = [];
 
   for (const grape of grapeVarieties) {
     if (!grape || typeof grape !== 'string') continue;
@@ -167,12 +183,20 @@ function mapGrapeVarieties(grapeVarieties) {
   return [...new Set(mapped)];
 }
 
+interface KeywordSuggestionQuery {
+  keyword?: string;
+}
+
+interface KeywordSuggestionBody {
+  keyword?: string;
+}
+
 /**
  * 와인 이름 제안 API
  */
-export const keywordSuggestion = async (req, res) => {
+export const keywordSuggestion = async (req: Request<{}, {}, KeywordSuggestionBody, KeywordSuggestionQuery>, res: Response): Promise<void> => {
   try {
-    let keyword = req.query.keyword || req.body.keyword;
+    let keyword: string | undefined = req.query.keyword || req.body.keyword;
 
     console.log('[keywordSuggestion] 원본 키워드:', keyword);
     console.log('[keywordSuggestion] 요청 정보:', {
@@ -183,7 +207,8 @@ export const keywordSuggestion = async (req, res) => {
     });
 
     if (!keyword || typeof keyword !== 'string') {
-      return res.status(400).json({ ok: false, error: 'keyword is required' });
+      res.status(400).json({ ok: false, error: 'keyword is required' });
+      return;
     }
 
     // URL 디코딩 처리 (안전하게)
@@ -191,8 +216,9 @@ export const keywordSuggestion = async (req, res) => {
       keyword = safeDecodeURIComponent(keyword);
       console.log('[keywordSuggestion] 디코딩된 키워드:', keyword);
     } catch (decodeError) {
+      const err = decodeError as Error;
       // 디코딩 실패 시 + 만 공백으로 변환하고 원본 사용
-      console.warn('[keywordSuggestion] 키워드 디코딩 실패, 원본 사용:', keyword, decodeError.message);
+      console.warn('[keywordSuggestion] 키워드 디코딩 실패, 원본 사용:', keyword, err.message);
       keyword = keyword.replace(/\+/g, ' ');
     }
 
@@ -201,7 +227,8 @@ export const keywordSuggestion = async (req, res) => {
 
     // 빈 키워드 체크
     if (!keyword || keyword.length === 0) {
-      return res.status(400).json({ ok: false, error: 'keyword cannot be empty' });
+      res.status(400).json({ ok: false, error: 'keyword cannot be empty' });
+      return;
     }
 
     console.log('[keywordSuggestion] 최종 키워드:', keyword);
@@ -212,14 +239,16 @@ export const keywordSuggestion = async (req, res) => {
 
     // 한글이 없으면 빈 배열 반환
     if (!containsKorean(keyword)) {
-      return res.json({ ok: true, wines: [] });
+      res.json({ ok: true, wines: [] });
+      return;
     }
 
     // 캐시에서 먼저 확인
     const cachedResult = getCachedResult(keyword);
     if (cachedResult) {
       console.log(`캐시에서 검색 결과 반환: ${keyword}`);
-      return res.json({ ok: true, wines: cachedResult, fromCache: true });
+      res.json({ ok: true, wines: cachedResult, fromCache: true });
+      return;
     }
 
     const geminiApiKey = process.env.GEMINI_API_KEY;
@@ -337,7 +366,7 @@ export const keywordSuggestion = async (req, res) => {
     }
 
     // JSON 파싱 시도
-    let wines = [];
+    let wines: WineSuggestion[] = [];
     try {
       // JSON 코드 블록 제거 (강화된 로직)
       let jsonText = responseText.trim();
@@ -368,8 +397,28 @@ export const keywordSuggestion = async (req, res) => {
         }
       }
       
-      const parsed = JSON.parse(jsonText);
+      const parsed = JSON.parse(jsonText) as { wines?: WineSuggestion[] };
       wines = parsed.wines || [];
+      
+      // 파싱된 결과 검증
+      if (!Array.isArray(wines)) {
+        console.error('[keywordSuggestion] wines가 배열이 아님:', typeof wines, wines);
+        wines = [];
+      } else {
+        // 최소한의 검증만 수행 (kr_name과 en_name이 모두 없는 경우만 제외)
+        const originalCount = wines.length;
+        wines = wines.filter(wine => {
+          if (!wine.kr_name && !wine.en_name) {
+            console.warn('[keywordSuggestion] kr_name과 en_name이 모두 없는 와인 제외:', wine);
+            return false;
+          }
+          return true;
+        });
+        
+        if (originalCount !== wines.length) {
+          console.log(`[keywordSuggestion] 유효하지 않은 와인 ${originalCount - wines.length}개 필터링됨`);
+        }
+      }
       
       // confidence 필드 처리 및 통계
       const confidenceStats = {
@@ -379,8 +428,15 @@ export const keywordSuggestion = async (req, res) => {
         undefined: wines.filter(w => !w.confidence).length,
       };
       
-      console.log(`검색 결과: 총 ${wines.length}개`);
-      console.log(`Confidence 분포 - high: ${confidenceStats.high}, medium: ${confidenceStats.medium}, low: ${confidenceStats.low}, undefined: ${confidenceStats.undefined}`);
+      console.log(`[keywordSuggestion] 검색 결과: 총 ${wines.length}개`);
+      console.log(`[keywordSuggestion] Confidence 분포 - high: ${confidenceStats.high}, medium: ${confidenceStats.medium}, low: ${confidenceStats.low}, undefined: ${confidenceStats.undefined}`);
+      
+      // 결과가 너무 적으면 경고
+      if (wines.length === 0) {
+        console.warn('[keywordSuggestion] 검색 결과가 없습니다. Gemini 응답:', responseText.substring(0, 500));
+      } else if (wines.length === 1) {
+        console.warn('[keywordSuggestion] 검색 결과가 1개만 반환됨. Gemini 응답:', responseText.substring(0, 500));
+      }
       
       // confidence가 없는 와인은 medium으로 설정
       wines = wines.map(wine => ({
@@ -394,10 +450,12 @@ export const keywordSuggestion = async (req, res) => {
         console.log(`⚠️ 낮은 확신도 와인 ${lowConfidenceWines.length}개:`, lowConfidenceWines.map(w => w.kr_name));
       }
     } catch (parseError) {
+      const err = parseError as Error;
       // JSON 파싱 실패 시 빈 배열 반환
-      console.error('[keywordSuggestion] JSON 파싱 실패:', parseError.message);
-      console.error('[keywordSuggestion] 파싱 에러 스택:', parseError.stack);
-      console.error('[keywordSuggestion] 응답 텍스트 (처음 1000자):', responseText.substring(0, 1000));
+      console.error('[keywordSuggestion] JSON 파싱 실패:', err.message);
+      console.error('[keywordSuggestion] 파싱 에러 스택:', err.stack);
+      console.error('[keywordSuggestion] 응답 텍스트 전체:', responseText);
+      console.error('[keywordSuggestion] 정리된 JSON 텍스트:', jsonText);
       wines = [];
     }
 
@@ -410,8 +468,9 @@ export const keywordSuggestion = async (req, res) => {
 
     res.json({ ok: true, wines, fromCache: false });
   } catch (e) {
-    console.error('[keywordSuggestion] 와인 이름 제안 API 호출 실패:', e.message);
-    console.error('[keywordSuggestion] 에러 스택:', e.stack);
+    const err = e as Error;
+    console.error('[keywordSuggestion] 와인 이름 제안 API 호출 실패:', err.message);
+    console.error('[keywordSuggestion] 에러 스택:', err.stack);
     console.error('[keywordSuggestion] 요청 정보:', {
       method: req.method,
       url: req.url,
@@ -420,18 +479,32 @@ export const keywordSuggestion = async (req, res) => {
     });
     res.status(500).json({ 
       ok: false, 
-      error: e.message || '서버 오류가 발생했습니다.',
-      ...(process.env.NODE_ENV === 'development' && { stack: e.stack })
+      error: err.message || '서버 오류가 발생했습니다.',
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
   }
 };
 
-export const getWineDetails = async (req, res) => {
+interface WineInput {
+  en_name?: string | null;
+  kr_name?: string | null;
+  fr_name?: string | null;
+  dutch_name?: string | null;
+  thumbnail_url?: string | null;
+  vintage?: string | null;
+}
+
+interface GetWineDetailsBody {
+  wine: WineInput;
+}
+
+export const getWineDetails = async (req: Request<{}, {}, GetWineDetailsBody>, res: Response): Promise<void> => {
   try {
     const { wine } = req.body;
     
     if (!wine) {
-      return res.status(400).json({ success: false, message: '와인 정보가 필요합니다.' });
+      res.status(400).json({ success: false, message: '와인 정보가 필요합니다.' });
+      return;
     }
 
     // 영어 이름과 필요한 정보를 기반으로 검색어 구성
@@ -443,7 +516,8 @@ export const getWineDetails = async (req, res) => {
     ].filter(Boolean).join(' ');
 
     if (!searchQuery.trim()) {
-      return res.status(400).json({ success: false, message: '검색할 와인 이름이 필요합니다.' });
+      res.status(400).json({ success: false, message: '검색할 와인 이름이 필요합니다.' });
+      return;
     }
 
     // Perplexity API 호출
@@ -552,7 +626,7 @@ export const getWineDetails = async (req, res) => {
     }
 
     // JSON 파싱 시도
-    let wineDetails = {};
+    let wineDetails: Record<string, unknown> = {};
     try {
       // JSON 코드 블록 제거
       let jsonText = responseText.trim();
@@ -563,9 +637,10 @@ export const getWineDetails = async (req, res) => {
         }
       }
       
-      wineDetails = JSON.parse(jsonText);
+      wineDetails = JSON.parse(jsonText) as Record<string, unknown>;
     } catch (parseError) {
-      console.error('JSON 파싱 실패:', parseError);
+      const err = parseError as Error;
+      console.error('JSON 파싱 실패:', err);
       console.error('응답 텍스트:', responseText.substring(0, 500));
       // 파싱 실패 시 기본 구조 반환
       wineDetails = {
@@ -791,43 +866,98 @@ ${JSON.stringify(wineObject, null, 2)}`;
     
     res.json({ success: true, wineDetails: finalDetails });
   } catch (err) {
-    console.error('와인 상세 정보 조회 실패:', err);
-    res.status(500).json({ success: false, message: err.message || '서버 오류' });
+    const error = err as Error;
+    console.error('와인 상세 정보 조회 실패:', error);
+    res.status(500).json({ success: false, message: error.message || '서버 오류' });
   }
 };
+
+interface DeleteCacheQuery {
+  keyword?: string;
+}
+
+interface DeleteCacheBody {
+  keyword?: string;
+}
 
 /**
  * 검색 캐시 삭제 API
  */
-export const deleteCache = async (req, res) => {
+export const deleteCache = async (req: Request<{}, {}, DeleteCacheBody, DeleteCacheQuery>, res: Response): Promise<void> => {
   try {
     const keyword = req.query.keyword || req.body.keyword;
 
     if (!keyword || typeof keyword !== 'string') {
-      return res.status(400).json({ ok: false, error: 'keyword is required' });
+      res.status(400).json({ ok: false, error: 'keyword is required' });
+      return;
     }
 
     deleteCachedResult(keyword);
     res.json({ ok: true, message: '캐시가 삭제되었습니다.' });
   } catch (e) {
-    console.error('캐시 삭제 실패:', e);
-    res.status(500).json({ ok: false, error: e.message });
+    const err = e as Error;
+    console.error('캐시 삭제 실패:', err);
+    res.status(500).json({ ok: false, error: err.message });
   }
 };
+
+interface SearchCandidatesBody {
+  candidates: string[];
+  original_ko?: string;
+}
+
+interface CandidateSearchResult {
+  candidate: string;
+  index: number;
+  success: boolean;
+  data?: WineSearchResult;
+  error?: string;
+}
+
+interface WineSearchResult {
+  wine_name: string;
+  thumbnail_url: string | null;
+  sources: WineSource[];
+  rating: WineRating | null;
+  price_range: string | null;
+  description: string | null;
+  region: string | null;
+  grape_varieties: string[];
+  winery: string | null;
+  vintage: string | null;
+  relevance_score: number;
+  match_confidence: 'high' | 'medium' | 'low';
+  candidate?: string;
+  originalIndex?: number;
+  hasTrustedSite?: boolean;
+}
+
+interface WineSource {
+  site_name: string;
+  url: string;
+  image_url: string | null;
+}
+
+interface WineRating {
+  score: number;
+  max_score: number;
+  source: string;
+}
 
 /**
  * Candidate들을 Perplexity API로 동시 검색하고 스코어링하여 정렬
  * POST /external_wine_search/search_candidates_with_perplexity
  */
-export const searchCandidatesWithPerplexity = async (req, res) => {
+export const searchCandidatesWithPerplexity = async (req: Request<{}, {}, SearchCandidatesBody>, res: Response): Promise<void> => {
   try {
     const { candidates, original_ko } = req.body;
     
     if (!candidates || !Array.isArray(candidates) || candidates.length === 0) {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         success: false, 
         message: 'candidates 배열이 필요합니다.' 
       });
+      return;
     }
 
     const perplexityApiKey = process.env.PERPLEXITY_API_KEY;
@@ -835,7 +965,7 @@ export const searchCandidatesWithPerplexity = async (req, res) => {
     console.log(`[searchCandidatesWithPerplexity] 시작 - candidates: ${candidates.length}개, original_ko: ${original_ko || 'N/A'}`);
     
     // 모든 candidate를 동시에 검색
-    const searchPromises = candidates.map(async (candidate, index) => {
+    const searchPromises = candidates.map(async (candidate: string, index: number): Promise<CandidateSearchResult> => {
       try {
         console.log(`[searchCandidatesWithPerplexity] Candidate ${index + 1}/${candidates.length} 검색 시작: "${candidate}"`);
         
@@ -950,7 +1080,7 @@ ${original_ko ? `원본 한국어 이름: ${original_ko}` : ''}
         }
 
         // JSON 파싱
-        let wineData = {};
+        let wineData: Record<string, unknown> = {};
         try {
           let jsonText = responseText.trim();
           
@@ -971,7 +1101,7 @@ ${original_ko ? `원본 한국어 이름: ${original_ko}` : ''}
           
           // 첫 번째 파싱 시도
           try {
-            wineData = JSON.parse(jsonText);
+            wineData = JSON.parse(jsonText) as Record<string, unknown>;
           } catch (firstTryError) {
             // 파싱 실패 시, JSON 문자열 내부의 문제 수정 시도
             // 따옴표가 제대로 닫히지 않은 경우를 처리하기 위해
@@ -982,7 +1112,7 @@ ${original_ko ? `원본 한국어 이름: ${original_ko}` : ''}
             const jsonMatch = jsonText.match(jsonObjectPattern);
             if (jsonMatch) {
               try {
-                wineData = JSON.parse(jsonMatch[0]);
+                wineData = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
               } catch (secondTryError) {
                 // 방법 2: 첫 번째 완전한 JSON 객체만 추출 시도
                 let braceCount = 0;
@@ -1004,7 +1134,7 @@ ${original_ko ? `원본 한국어 이름: ${original_ko}` : ''}
                 
                 if (startIdx !== -1 && endIdx !== -1) {
                   try {
-                    wineData = JSON.parse(jsonText.substring(startIdx, endIdx + 1));
+                    wineData = JSON.parse(jsonText.substring(startIdx, endIdx + 1)) as Record<string, unknown>;
                   } catch (thirdTryError) {
                     // 모든 시도 실패
                     throw firstTryError;
@@ -1018,7 +1148,8 @@ ${original_ko ? `원본 한국어 이름: ${original_ko}` : ''}
             }
           }
         } catch (parseError) {
-          console.error(`JSON 파싱 실패 (candidate: ${candidate}):`, parseError.message);
+          const err = parseError as Error;
+          console.error(`JSON 파싱 실패 (candidate: ${candidate}):`, err.message);
           console.error(`응답 텍스트 (처음 1000자):`, responseText.substring(0, 1000));
           
           // 파싱 실패해도 기본 정보는 반환 (부분 성공으로 처리)
@@ -1043,19 +1174,19 @@ ${original_ko ? `원본 한국어 이름: ${original_ko}` : ''}
           };
         }
 
-        const resultData = {
-          wine_name: wineData.wine_name || candidate,
-          thumbnail_url: wineData.thumbnail_url || null,
-          sources: wineData.sources || [],
-          rating: wineData.rating || null,
-          price_range: wineData.price_range || null,
-          description: wineData.description || null,
-          region: wineData.region || null,
-          grape_varieties: wineData.grape_varieties || [],
-          winery: wineData.winery || null,
-          vintage: wineData.vintage || null,
-          relevance_score: wineData.relevance_score || 0.5,
-          match_confidence: wineData.match_confidence || 'medium'
+        const resultData: WineSearchResult = {
+          wine_name: (wineData.wine_name as string) || candidate,
+          thumbnail_url: (wineData.thumbnail_url as string | null) || null,
+          sources: (wineData.sources as WineSource[]) || [],
+          rating: (wineData.rating as WineRating | null) || null,
+          price_range: (wineData.price_range as string | null) || null,
+          description: (wineData.description as string | null) || null,
+          region: (wineData.region as string | null) || null,
+          grape_varieties: (wineData.grape_varieties as string[]) || [],
+          winery: (wineData.winery as string | null) || null,
+          vintage: (wineData.vintage as string | null) || null,
+          relevance_score: (wineData.relevance_score as number) || 0.5,
+          match_confidence: (wineData.match_confidence as 'high' | 'medium' | 'low') || 'medium'
         };
         
         console.log(`[searchCandidatesWithPerplexity] Candidate ${index + 1} 파싱 완료:`, {
@@ -1072,12 +1203,13 @@ ${original_ko ? `원본 한국어 이름: ${original_ko}` : ''}
           data: resultData
         };
       } catch (error) {
-        console.error(`후보 "${candidate}" 검색 오류:`, error);
+        const err = error as Error;
+        console.error(`후보 "${candidate}" 검색 오류:`, err);
         return {
           candidate,
           index,
           success: false,
-          error: error.message
+          error: err.message
         };
       }
     });
@@ -1153,10 +1285,11 @@ ${original_ko ? `원본 한국어 이름: ${original_ko}` : ''}
       failed: results.filter(r => !r.success).length
     });
   } catch (err) {
-    console.error('Candidate 검색 실패:', err);
+    const error = err as Error;
+    console.error('Candidate 검색 실패:', error);
     res.status(500).json({ 
       success: false, 
-      message: err.message || '서버 오류' 
+      message: error.message || '서버 오류' 
     });
   }
 };
@@ -1174,10 +1307,31 @@ const TRUSTED_WINE_DOMAINS = [
   'wineenthusiast.com',
 ];
 
+interface SearchMetadata {
+  quoted_full_name?: string;
+  region_keywords?: string[];
+  varietal_keywords?: string[];
+  vintage_keywords?: string[];
+}
+
+interface ScoreContext {
+  candidate: string;
+  searchMetadata?: SearchMetadata;
+  producerName: string;
+  cuvee: string;
+  vintage: string;
+}
+
+interface ScoreResult {
+  title?: string;
+  snippet?: string;
+  url?: string;
+}
+
 /**
  * 와인 검색 쿼리 구성
  */
-function buildWineQuery(wineName, withSites = false) {
+function buildWineQuery(wineName: string, withSites = false): string {
   const base = `"${wineName}" wine`;
   // if (!withSites) return base;
   
@@ -1193,7 +1347,7 @@ function buildWineQuery(wineName, withSites = false) {
  * 와인 검색 쿼리 구성 (search_metadata 사용)
  * 와인명, "wine", 주요 사이트 키워드 포함
  */
-function buildWineQueryWithMetadata(searchMetadata, candidate) {
+function buildWineQueryWithMetadata(searchMetadata: SearchMetadata | undefined, candidate: string): string {
   // 쌍따옴표로 감싼 전체 이름 또는 기본 candidate
   const wineName = searchMetadata?.quoted_full_name || `"${candidate}"`;
   
@@ -1207,7 +1361,7 @@ function buildWineQueryWithMetadata(searchMetadata, candidate) {
 /**
  * 와인명에서 생산자명 추출 (간단한 휴리스틱)
  */
-function extractProducerName(candidate, searchMetadata) {
+function extractProducerName(candidate: string, searchMetadata?: SearchMetadata): string {
   // candidate에서 첫 번째 단어나 주요 단어 추출
   const words = candidate.split(/\s+/);
   if (words.length > 0) {
@@ -1220,7 +1374,7 @@ function extractProducerName(candidate, searchMetadata) {
 /**
  * 와인명에서 Cuvée 추출 (간단한 휴리스틱)
  */
-function extractCuvee(candidate) {
+function extractCuvee(candidate: string): string {
   // "Vat 1", "Blood of Jupiter" 같은 특별한 이름 추출
   const cuveePatterns = [
     /vat\s+\d+/i,
@@ -1242,7 +1396,7 @@ function extractCuvee(candidate) {
 /**
  * 도메인 가중치 계산
  */
-function domainWeight(url, producerName) {
+function domainWeight(url: string | null | undefined, producerName: string): number {
   if (!url) return 5;
   
   const urlLower = url.toLowerCase();
@@ -1266,7 +1420,7 @@ function domainWeight(url, producerName) {
 /**
  * 결과 점수 계산
  */
-function computeScore(result, context) {
+function computeScore(result: ScoreResult, context: ScoreContext): number {
   const { candidate, searchMetadata, producerName, cuvee, vintage } = context;
   
   // 전처리
@@ -1353,15 +1507,22 @@ function computeScore(result, context) {
   return score;
 }
 
-export const searchSingleCandidateV3 = async (req, res) => {
+interface SearchSingleCandidateV3Body {
+  candidate: string;
+  original_ko?: string;
+  search_metadata?: SearchMetadata;
+}
+
+export const searchSingleCandidateV3 = async (req: Request<{}, {}, SearchSingleCandidateV3Body>, res: Response): Promise<void> => {
   try {
     const { candidate, original_ko, search_metadata } = req.body;
     
     if (!candidate) {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         success: false, 
         message: 'candidate가 필요합니다.' 
       });
+      return;
     }
 
     console.log(`[searchSingleCandidateV3] 검색 시작: "${candidate}"`);
@@ -1423,14 +1584,15 @@ export const searchSingleCandidateV3 = async (req, res) => {
       const errorText = await response.text().catch(() => '');
       const errorPreview = errorText.length > 300 ? errorText.substring(0, 300) + '...' : errorText;
       console.error(`[searchSingleCandidateV3] SerpAPI 오류 (${response.status}):`, errorPreview);
-      return res.status(response.status).json({
+      res.status(response.status).json({
         success: false,
         message: `SerpAPI 오류: ${response.status}`,
         error: errorPreview
       });
+      return;
     }
 
-    const serpData = await response.json();
+    const serpData = await response.json() as Record<string, unknown>;
     
     // 응답 전체 로그 출력
     const responseString = JSON.stringify(serpData, null, 2);
@@ -1463,11 +1625,11 @@ export const searchSingleCandidateV3 = async (req, res) => {
     console.log(`[searchSingleCandidateV3] SerpAPI 응답 전체 키:`, Object.keys(serpData));
     
     // SerpAPI 결과를 직접 카드로 변환 (organic_results + shopping_results)
-    const organicResults = serpData.organic_results || [];
-    const shoppingResults = serpData.shopping_results || [];
+    const organicResults = (serpData.organic_results as unknown[]) || [];
+    const shoppingResults = (serpData.shopping_results as unknown[]) || [];
     
     // 쇼핑 결과를 organic_results 형식으로 변환
-    const convertedShoppingResults = shoppingResults.map((item, index) => ({
+    const convertedShoppingResults = shoppingResults.map((item: Record<string, unknown>, index: number) => ({
       position: (organicResults.length || 0) + index + 1,
       title: item.title || item.product_title || '',
       link: item.link || item.product_link || '',
@@ -1525,14 +1687,14 @@ export const searchSingleCandidateV3 = async (req, res) => {
     };
     
     // 카드 결과 변환 및 점수 계산
-    const cardResultsWithScore = allResults.map((result, index) => {
+    const cardResultsWithScore = allResults.map((result: Record<string, unknown>, index: number) => {
       // 도메인 추출
-      let domain = null;
+      let domain: string | null = null;
       try {
         if (result.link) {
-          domain = new URL(result.link).hostname.replace('www.', '');
+          domain = new URL(result.link as string).hostname.replace('www.', '');
         } else if (result.displayed_link) {
-          domain = result.displayed_link.replace('www.', '').split(' ›')[0];
+          domain = (result.displayed_link as string).replace('www.', '').split(' ›')[0];
         }
       } catch (e) {
         // URL 파싱 실패
@@ -1541,30 +1703,31 @@ export const searchSingleCandidateV3 = async (req, res) => {
       const siteName = domain ? domain.split('.')[0] : 'Unknown';
       
       // 가격 정보 추출 시도 (snippet에서)
-      let priceRange = null;
+      let priceRange: string | null = null;
       if (result.snippet) {
-        const priceMatch = result.snippet.match(/(?:US\$|AU\$|€|£|¥|KRW|원)\s*[\d,]+(?:\.\d+)?(?:\s*-\s*(?:US\$|AU\$|€|£|¥|KRW|원)?\s*[\d,]+(?:\.\d+)?)?/);
+        const priceMatch = (result.snippet as string).match(/(?:US\$|AU\$|€|£|¥|KRW|원)\s*[\d,]+(?:\.\d+)?(?:\s*-\s*(?:US\$|AU\$|€|£|¥|KRW|원)?\s*[\d,]+(?:\.\d+)?)?/);
         if (priceMatch) {
           priceRange = priceMatch[0].trim();
         }
       }
       
       // Rich Snippet에서 가격 정보 추출
-      if (!priceRange && result.rich_snippet?.top?.price) {
-        priceRange = result.rich_snippet.top.price;
+      if (!priceRange && (result.rich_snippet as Record<string, unknown>)?.top && ((result.rich_snippet as Record<string, unknown>).top as Record<string, unknown>)?.price) {
+        priceRange = ((result.rich_snippet as Record<string, unknown>).top as Record<string, unknown>).price as string;
       }
       
-      const thumbnailUrl = result.thumbnail || result.thumbnail_url || result.rich_snippet?.top?.thumbnail || null;
+      const thumbnailUrl = (result.thumbnail || result.thumbnail_url || ((result.rich_snippet as Record<string, unknown>)?.top as Record<string, unknown>)?.thumbnail || null) as string | null;
       
       // 위치 기반 관련성 점수 계산 (position이 낮을수록 관련성 높음)
       // position 1-3: 높음, 4-10: 중간, 11+: 낮음
       let relevanceScore = 0.5;
-      let matchConfidence = 'medium';
+      let matchConfidence: 'high' | 'medium' | 'low' = 'medium';
       if (result.position) {
-        if (result.position <= 3) {
+        const position = result.position as number;
+        if (position <= 3) {
           relevanceScore = 0.9;
           matchConfidence = 'high';
-        } else if (result.position <= 10) {
+        } else if (position <= 10) {
           relevanceScore = 0.7;
           matchConfidence = 'medium';
         } else {
@@ -1583,7 +1746,7 @@ export const searchSingleCandidateV3 = async (req, res) => {
       }
       
       // wine_name 정리: 플레이스홀더 제거 및 정리
-      let wineName = result.title || candidate;
+      let wineName = (result.title as string) || candidate;
       // [YEAR], [VINTAGE] 같은 플레이스홀더 제거
       wineName = wineName.replace(/\[.*?\]/g, '').trim();
       // 연속된 공백 정리
@@ -1591,9 +1754,9 @@ export const searchSingleCandidateV3 = async (req, res) => {
       
       // 점수 계산
       const score = computeScore({
-        title: result.title,
-        snippet: result.snippet,
-        url: result.link
+        title: result.title as string | undefined,
+        snippet: result.snippet as string | undefined,
+        url: result.link as string | undefined
       }, context);
       
       return {
@@ -1608,7 +1771,7 @@ export const searchSingleCandidateV3 = async (req, res) => {
         position: result.position || null,
         sources: result.link ? [{
           site_name: siteName.charAt(0).toUpperCase() + siteName.slice(1),
-          url: result.link,
+          url: result.link as string,
           image_url: thumbnailUrl
         }] : [],
         rating: null,
@@ -1668,10 +1831,11 @@ export const searchSingleCandidateV3 = async (req, res) => {
       result
     });
   } catch (err) {
-    console.error('[searchSingleCandidateV3] 검색 실패:', err);
+    const error = err as Error;
+    console.error('[searchSingleCandidateV3] 검색 실패:', error);
     res.status(500).json({ 
       success: false, 
-      message: err.message || '서버 오류' 
+      message: error.message || '서버 오류' 
     });
   }
 };
@@ -1679,11 +1843,11 @@ export const searchSingleCandidateV3 = async (req, res) => {
 /**
  * SerpAPI 결과를 정리된 텍스트로 변환
  */
-function formatSerpApiResults(serpData) {
-  const results = [];
-  const organicResults = serpData.organic_results || [];
+function formatSerpApiResults(serpData: Record<string, unknown>): string {
+  const results: string[] = [];
+  const organicResults = (serpData.organic_results as Record<string, unknown>[]) || [];
   
-  organicResults.forEach((result, index) => {
+  organicResults.forEach((result: Record<string, unknown>, index: number) => {
     let domain = 'N/A';
     try {
       if (result.link) {
@@ -1708,12 +1872,19 @@ Description: ${result.snippet || 'N/A'}
   return results.join('\n\n');
 }
 
+interface ExtractedBlock {
+  title: string;
+  url: string;
+  snippet: string;
+  image: string;
+}
+
 /**
  * 구글 검색 결과 HTML 정리 - 핵심 정보만 추출 (모든 태그 제거)
  */
-function cleanGoogleSearchHtml(html) {
+function cleanGoogleSearchHtml(html: string): string {
   // 검색 결과 블록만 추출 (div.g 또는 유사한 구조)
-  const resultBlocks = [];
+  const resultBlocks: ExtractedBlock[] = [];
   
   // 여러 패턴 시도
   // 패턴 1: div.g 클래스
@@ -1856,7 +2027,7 @@ Description: ${block.snippet || 'N/A'}
 /**
  * 모든 HTML 태그 제거 (재귀적으로 처리)
  */
-function removeAllTags(html) {
+function removeAllTags(html: string): string {
   if (!html) return '';
   
   // HTML 엔티티 디코딩
@@ -1884,11 +2055,20 @@ function removeAllTags(html) {
   return cleaned;
 }
 
+interface GoogleSearchResult {
+  title: string;
+  url: string;
+  domain: string;
+  thumbnail: string | null;
+  price: string | null;
+  description: string;
+}
+
 /**
  * 구글 검색 결과 HTML에서 구조화된 정보 추출 (기존 함수 - 사용 안 함)
  */
-function extractGoogleSearchResults(html) {
-  const results = [];
+function extractGoogleSearchResults(html: string): GoogleSearchResult[] {
+  const results: GoogleSearchResult[] = [];
   
   // 구글 검색 결과는 일반적으로 div.g 또는 div[data-ved]로 시작
   // 각 결과는 다음과 같은 구조를 가짐:
@@ -2027,7 +2207,7 @@ function extractGoogleSearchResults(html) {
 /**
  * HTML 태그 제거 및 텍스트 정리
  */
-function cleanHtml(html) {
+function cleanHtml(html: string): string {
   if (!html) return '';
   return html
     .replace(/<[^>]+>/g, '') // HTML 태그 제거
@@ -2044,7 +2224,7 @@ function cleanHtml(html) {
 /**
  * 구글 URL 디코딩 (/url?q= 형태 처리)
  */
-function decodeGoogleUrl(url) {
+function decodeGoogleUrl(url: string | null): string | null {
   if (!url) return null;
   
   // /url?q= 형태인 경우
@@ -2072,19 +2252,25 @@ function decodeGoogleUrl(url) {
   return url;
 }
 
+interface SearchSingleCandidateBody {
+  candidate: string;
+  original_ko?: string;
+}
+
 /**
  * 단일 Candidate를 Perplexity API로 검색
  * POST /external_wine_search/search_single_candidate
  */
-export const searchSingleCandidate = async (req, res) => {
+export const searchSingleCandidate = async (req: Request<{}, {}, SearchSingleCandidateBody>, res: Response): Promise<void> => {
   try {
     const { candidate, original_ko } = req.body;
     
     if (!candidate) {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         success: false, 
         message: 'candidate가 필요합니다.' 
       });
+      return;
     }
 
     // Perplexity API 키
@@ -2285,14 +2471,15 @@ ${original_ko ? `Original Korean name: ${original_ko}` : ''}
       const errorText = await perplexityResponse.text().catch(() => '');
       const errorPreview = errorText.length > 300 ? errorText.substring(0, 300) + '...' : errorText;
       console.error(`[searchSingleCandidate] Perplexity API 오류 (${perplexityResponse.status}):`, errorPreview);
-      return res.status(perplexityResponse.status).json({
+      res.status(perplexityResponse.status).json({
         success: false,
         message: `Perplexity API 오류: ${perplexityResponse.status}`,
         error: errorPreview
       });
+      return;
     }
 
-    const perplexityData = await perplexityResponse.json();
+    const perplexityData = await perplexityResponse.json() as { choices?: Array<{ message?: { content?: string } }> };
     const responseText = perplexityData.choices?.[0]?.message?.content;
     
     // 응답 로그 (너무 길면 자르기)
@@ -2303,15 +2490,16 @@ ${original_ko ? `Original Korean name: ${original_ko}` : ''}
     
     if (!responseText) {
       console.log(`[searchSingleCandidate] 응답 없음`);
-      return res.json({
+      res.json({
         success: false,
         candidate,
         error: '응답 없음'
       });
+      return;
     }
 
     // JSON 파싱
-    let wineData = {};
+    let wineData: Record<string, unknown> = {};
     try {
       let jsonText = responseText.trim();
       
@@ -2324,19 +2512,19 @@ ${original_ko ? `Original Korean name: ${original_ko}` : ''}
       }
       
       // JSON 파싱 시도
-      let parsed = JSON.parse(jsonText);
+      const parsed = JSON.parse(jsonText) as Record<string, unknown> | Record<string, unknown>[] | { wines?: Record<string, unknown>[] };
       
       // OpenAI의 response_format이 json_object일 때는 객체를 반환할 수 있음
       // 배열이거나 객체의 배열 속성이 있는지 확인
       if (Array.isArray(parsed)) {
         // 배열인 경우 첫 번째 요소 사용
-        wineData = parsed.length > 0 ? parsed[0] : {};
-      } else if (parsed.wines && Array.isArray(parsed.wines)) {
+        wineData = parsed.length > 0 ? (parsed[0] as Record<string, unknown>) : {};
+      } else if ('wines' in parsed && Array.isArray(parsed.wines)) {
         // { wines: [...] } 형태인 경우
-        wineData = parsed.wines.length > 0 ? parsed.wines[0] : {};
+        wineData = parsed.wines.length > 0 ? (parsed.wines[0] as Record<string, unknown>) : {};
       } else if (typeof parsed === 'object' && Object.keys(parsed).length > 0) {
         // 단일 객체인 경우 그대로 사용
-        wineData = parsed;
+        wineData = parsed as Record<string, unknown>;
       } else {
         throw new Error('유효한 와인 데이터를 찾을 수 없습니다.');
       }
@@ -2344,21 +2532,24 @@ ${original_ko ? `Original Korean name: ${original_ko}` : ''}
       // 빈 객체인 경우 처리
       if (!wineData || Object.keys(wineData).length === 0) {
         console.log(`[searchSingleCandidate] 와인을 찾지 못함: "${candidate}"`);
-        return res.json({
+        res.json({
           success: false,
           candidate,
           error: '와인을 찾지 못했습니다.'
         });
+        return;
       }
     } catch (parseError) {
-      console.error(`[searchSingleCandidate] JSON 파싱 실패:`, parseError.message);
+      const err = parseError as Error;
+      console.error(`[searchSingleCandidate] JSON 파싱 실패:`, err.message);
       console.error(`[searchSingleCandidate] 응답 텍스트 (처음 500자):`, responseText.substring(0, 500));
       
-      return res.json({
+      res.json({
         success: false,
         candidate,
-        error: `JSON 파싱 실패: ${parseError.message}`
+        error: `JSON 파싱 실패: ${err.message}`
       });
+      return;
     }
 
     // 공신력 있는 사이트 목록
@@ -2376,26 +2567,26 @@ ${original_ko ? `Original Korean name: ${original_ko}` : ''}
     ];
 
     // 공신력 있는 사이트가 sources에 있는지 확인
-    const hasTrustedSite = wineData.sources?.some(source => {
+    const hasTrustedSite = (wineData.sources as WineSource[] | undefined)?.some(source => {
       const siteName = (source.site_name || '').toLowerCase();
       return trustedSites.some(trusted => siteName.includes(trusted));
     });
 
-    const result = {
+    const result: WineSearchResult & { candidate: string; hasTrustedSite: boolean } = {
       candidate,
-      wine_name: wineData.wine_name || candidate,
-      thumbnail_url: wineData.thumbnail_url || null,
-      sources: wineData.sources || [],
-      rating: wineData.rating || null,
-      price_range: wineData.price_range || null,
-      description: wineData.description || null,
-      region: wineData.region || null,
-      grape_varieties: wineData.grape_varieties || [],
-      winery: wineData.winery || null,
-      vintage: wineData.vintage || null,
-      relevance_score: wineData.relevance_score || 0.5,
-      match_confidence: wineData.match_confidence || 'medium',
-      hasTrustedSite
+      wine_name: (wineData.wine_name as string) || candidate,
+      thumbnail_url: (wineData.thumbnail_url as string | null) || null,
+      sources: (wineData.sources as WineSource[]) || [],
+      rating: (wineData.rating as WineRating | null) || null,
+      price_range: (wineData.price_range as string | null) || null,
+      description: (wineData.description as string | null) || null,
+      region: (wineData.region as string | null) || null,
+      grape_varieties: (wineData.grape_varieties as string[]) || [],
+      winery: (wineData.winery as string | null) || null,
+      vintage: (wineData.vintage as string | null) || null,
+      relevance_score: (wineData.relevance_score as number) || 0.5,
+      match_confidence: (wineData.match_confidence as 'high' | 'medium' | 'low') || 'medium',
+      hasTrustedSite: hasTrustedSite || false
     };
 
     console.log(`[searchSingleCandidate] 검색 완료:`, {
@@ -2411,10 +2602,11 @@ ${original_ko ? `Original Korean name: ${original_ko}` : ''}
       result
     });
   } catch (err) {
-    console.error('[searchSingleCandidate] 검색 실패:', err);
+    const error = err as Error;
+    console.error('[searchSingleCandidate] 검색 실패:', error);
     res.status(500).json({ 
       success: false, 
-      message: err.message || '서버 오류' 
+      message: error.message || '서버 오류' 
     });
   }
 };
@@ -2423,15 +2615,16 @@ ${original_ko ? `Original Korean name: ${original_ko}` : ''}
  * Candidate들을 하나의 프롬프트로 Perplexity API 검색 (Ver2)
  * POST /external_wine_search/search_candidates_with_perplexity_v2
  */
-export const searchCandidatesWithPerplexityV2 = async (req, res) => {
+export const searchCandidatesWithPerplexityV2 = async (req: Request<{}, {}, SearchCandidatesBody>, res: Response): Promise<void> => {
   try {
     const { candidates, original_ko } = req.body;
     
     if (!candidates || !Array.isArray(candidates) || candidates.length === 0) {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         success: false, 
         message: 'candidates 배열이 필요합니다.' 
       });
+      return;
     }
 
     const perplexityApiKey = process.env.PERPLEXITY_API_KEY;
@@ -2576,7 +2769,7 @@ ${original_ko ? `원본 한국어 이름: ${original_ko}` : ''}
     console.log(`[searchCandidatesWithPerplexityV2] 모든 API 응답 수신 (${elapsedTime}ms)`);
 
     // 각 API 응답 파싱
-    let allWinesArrays = [];
+    let allWinesArrays: Array<WineSearchResult & { candidate?: string; source?: string }> = [];
 
     // Perplexity 결과 처리
     if (perplexityResult.status === 'fulfilled' && perplexityResult.value.ok) {
@@ -2591,13 +2784,14 @@ ${original_ko ? `원본 한국어 이름: ${original_ko}` : ''}
               jsonText = jsonBlockMatch[1].trim();
             }
           }
-          const parsed = JSON.parse(jsonText);
-          const winesArray = Array.isArray(parsed) ? parsed : (parsed.wines ? parsed.wines : [parsed]);
-          allWinesArrays.push(...winesArray.map(w => ({ ...w, source: 'perplexity' })));
+          const parsed = JSON.parse(jsonText) as WineSearchResult[] | { wines?: WineSearchResult[] } | WineSearchResult;
+          const winesArray = Array.isArray(parsed) ? parsed : ('wines' in parsed && Array.isArray(parsed.wines) ? parsed.wines : [parsed]);
+          allWinesArrays.push(...winesArray.map((w: WineSearchResult) => ({ ...w, source: 'perplexity' })));
           console.log(`[searchCandidatesWithPerplexityV2] Perplexity 파싱 완료 - ${winesArray.length}개`);
         }
       } catch (error) {
-        console.error(`[searchCandidatesWithPerplexityV2] Perplexity 파싱 실패:`, error.message);
+        const err = error as Error;
+        console.error(`[searchCandidatesWithPerplexityV2] Perplexity 파싱 실패:`, err.message);
       }
     } else {
       console.warn(`[searchCandidatesWithPerplexityV2] Perplexity API 실패`);
@@ -2616,13 +2810,14 @@ ${original_ko ? `원본 한국어 이름: ${original_ko}` : ''}
               jsonText = jsonBlockMatch[1].trim();
             }
           }
-          const parsed = JSON.parse(jsonText);
-          const winesArray = Array.isArray(parsed) ? parsed : (parsed.wines ? parsed.wines : [parsed]);
-          allWinesArrays.push(...winesArray.map(w => ({ ...w, source: 'gemini' })));
+          const parsed = JSON.parse(jsonText) as WineSearchResult[] | { wines?: WineSearchResult[] } | WineSearchResult;
+          const winesArray = Array.isArray(parsed) ? parsed : ('wines' in parsed && Array.isArray(parsed.wines) ? parsed.wines : [parsed]);
+          allWinesArrays.push(...winesArray.map((w: WineSearchResult) => ({ ...w, source: 'gemini' })));
           console.log(`[searchCandidatesWithPerplexityV2] Gemini 파싱 완료 - ${winesArray.length}개`);
         }
       } catch (error) {
-        console.error(`[searchCandidatesWithPerplexityV2] Gemini 파싱 실패:`, error.message);
+        const err = error as Error;
+        console.error(`[searchCandidatesWithPerplexityV2] Gemini 파싱 실패:`, err.message);
       }
     } else {
       console.warn(`[searchCandidatesWithPerplexityV2] Gemini API 실패`);
@@ -2641,13 +2836,14 @@ ${original_ko ? `원본 한국어 이름: ${original_ko}` : ''}
               jsonText = jsonBlockMatch[1].trim();
             }
           }
-          const parsed = JSON.parse(jsonText);
-          const winesArray = Array.isArray(parsed) ? parsed : (parsed.wines ? parsed.wines : [parsed]);
-          allWinesArrays.push(...winesArray.map(w => ({ ...w, source: 'chatgpt' })));
+          const parsed = JSON.parse(jsonText) as WineSearchResult[] | { wines?: WineSearchResult[] } | WineSearchResult;
+          const winesArray = Array.isArray(parsed) ? parsed : ('wines' in parsed && Array.isArray(parsed.wines) ? parsed.wines : [parsed]);
+          allWinesArrays.push(...winesArray.map((w: WineSearchResult) => ({ ...w, source: 'chatgpt' })));
           console.log(`[searchCandidatesWithPerplexityV2] ChatGPT 파싱 완료 - ${winesArray.length}개`);
         }
       } catch (error) {
-        console.error(`[searchCandidatesWithPerplexityV2] ChatGPT 파싱 실패:`, error.message);
+        const err = error as Error;
+        console.error(`[searchCandidatesWithPerplexityV2] ChatGPT 파싱 실패:`, err.message);
       }
     } else {
       console.warn(`[searchCandidatesWithPerplexityV2] ChatGPT API 실패`);
@@ -2656,16 +2852,17 @@ ${original_ko ? `원본 한국어 이름: ${original_ko}` : ''}
     // 결과가 없으면 빈 배열 반환
     if (allWinesArrays.length === 0) {
       console.log(`[searchCandidatesWithPerplexityV2] 모든 API에서 결과 없음`);
-      return res.json({
+      res.json({
         success: true,
         results: [],
         total: 0,
         failed: candidates.length
       });
+      return;
     }
 
     // candidate별로 그룹화하고 병합
-    const winesMap = new Map();
+    const winesMap = new Map<string, WineSearchResult & { candidate: string; sources_list: string[] }>();
     allWinesArrays.forEach(wine => {
       const candidate = wine.candidate || candidates[0] || '';
       const key = candidate.toLowerCase().trim();
@@ -2820,10 +3017,11 @@ ${original_ko ? `원본 한국어 이름: ${original_ko}` : ''}
       failed: candidates.length - processedResults.length
     });
   } catch (err) {
-    console.error('[searchCandidatesWithPerplexityV2] 검색 실패:', err);
+    const error = err as Error;
+    console.error('[searchCandidatesWithPerplexityV2] 검색 실패:', error);
     res.status(500).json({ 
       success: false, 
-      message: err.message || '서버 오류' 
+      message: error.message || '서버 오류' 
     });
   }
 };

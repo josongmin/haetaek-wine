@@ -22,13 +22,13 @@ phases:
     commands:
       - echo "Installing dependencies..."
       - node --version
-      - npm --version
-      - npm ci
+      - pnpm --version || npm install -g pnpm
+      - pnpm install --frozen-lockfile
 
   pre_build:
     commands:
       - echo "Running tests..."
-      - npm run test --workspace=server || true
+      - pnpm --filter server test || true
       - echo "Pre-build completed"
 
   build:
@@ -54,7 +54,8 @@ artifacts:
     - 'server/**/*'
     - 'shared/**/*'
     - 'package.json'
-    - 'package-lock.json'
+    - 'pnpm-lock.yaml'
+    - 'pnpm-workspace.yaml'
     # 빌드된 클라이언트 파일
     - 'client/build/**/*'
   name: wine-admin-$(date +%Y-%m-%d-%H-%M-%S)

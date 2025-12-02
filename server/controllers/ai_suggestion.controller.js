@@ -1,38 +1,48 @@
 // controllers/ai_suggestion.controller.js
 import fetch from 'node-fetch';
 
-// API 키 설정 (환경변수에서 가져오기)
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+// API 키를 함수 내부에서 읽도록 변경 (dotenv.config() 실행 후에 읽히도록)
+const getOpenAIKey = () => process.env.OPENAI_API_KEY;
+const getGeminiKey = () => process.env.GEMINI_API_KEY;
 
-if (!OPENAI_API_KEY) {
-  console.error('OPENAI_API_KEY is not set in environment variables');
-}
-if (!GEMINI_API_KEY) {
-  console.error('GEMINI_API_KEY is not set in environment variables');
-}
-
-const PROMPT_TEMPLATE = `You are a wine-product extraction and normalization system.
+const PROMPT_TEMPLATE = `You are a wine-product extraction and normalization system specialized in Korean wine market.
 
 TASK:
 
-Given a long Korean text that contains multiple wine mentions mixed with descriptive commentary, extract ONLY the actual wine product names.  
+Given a Korean text (even a single word or short phrase), interpret it as a wine-related query and suggest MULTIPLE DISTINCT WINE PRODUCTS that match the query.
 
-For each wine, output:
+**CRITICAL**: If the input is a grape variety, region, or general wine term, suggest 5-10 DIFFERENT SPECIFIC WINE PRODUCTS from various producers.
 
-1. wine_index: 1, 2, 3, ...
+For each DISTINCT wine product, output:
 
-2. original_ko: the Korean wine name phrase as it directly appears in the text (cleaned)
+1. wine_index: 1, 2, 3, ... (each wine gets a unique index)
 
-3. candidates_en: 2–5 English wine name candidates, each containing **sufficient information for accurate international wine search**, including:
+2. original_ko: A descriptive Korean name for this specific wine (NOT just repeating the input)
+   - For "까베르네" input → "샤또 마고", "오퍼스 원", "펜폴즈 빈 407" etc. (different wines)
+   - For "샤또 마고" input → "샤또 마고 2015", "샤또 마고 2016" etc. (different vintages)
 
-   - Producer (winery)
-
+3. candidates_en: 2–5 English name variations for THIS SPECIFIC wine, including:
+   - Producer (winery) - REQUIRED
    - Cuvée / Label name
-
-   - Vintage
-
-   - Optional: Region or varietal IF AND ONLY IF they are part of the official label naming used by Vivino or Wine-Searcher.
+   - Vintage (if applicable)
+   
+   **EXAMPLES OF CORRECT OUTPUT:**
+   
+   Input: "까베르네"
+   Output: [
+     { wine_index: 1, original_ko: "샤또 마고", candidates_en: ["Château Margaux", "Chateau Margaux 2015"] },
+     { wine_index: 2, original_ko: "오퍼스 원", candidates_en: ["Opus One", "Opus One 2018"] },
+     { wine_index: 3, original_ko: "펜폴즈 빈 407", candidates_en: ["Penfolds Bin 407 Cabernet Sauvignon"] },
+     { wine_index: 4, original_ko: "케이머스 카베르네", candidates_en: ["Caymus Cabernet Sauvignon"] },
+     { wine_index: 5, original_ko: "실버 오크", candidates_en: ["Silver Oak Cabernet Sauvignon"] }
+   ]
+   
+   Input: "샤또 마고"
+   Output: [
+     { wine_index: 1, original_ko: "샤또 마고 2015", candidates_en: ["Château Margaux 2015"] },
+     { wine_index: 2, original_ko: "샤또 마고 2016", candidates_en: ["Château Margaux 2016"] },
+     { wine_index: 3, original_ko: "샤또 마고 2018", candidates_en: ["Château Margaux 2018"] }
+   ]
 
 4. search_metadata: Additional search keywords for building optimized search queries:
 
@@ -105,57 +115,111 @@ Now process the following text:
  * OpenAI API 호출
  */
 async function callOpenAI(text) {
+  const OPENAI_API_KEY = getOpenAIKey();
   if (!OPENAI_API_KEY) {
-    console.warn('OPENAI_API_KEY가 설정되지 않았습니다.');
+    console.warn('[OpenAI] API 키가 설정되지 않았습니다.');
     return null;
   }
 
+  console.log('[OpenAI] API 호출 시작:', {
+    textLength: text.length,
+    textPreview: text.substring(0, 100),
+    hasApiKey: !!OPENAI_API_KEY
+  });
+
   try {
     const prompt = PROMPT_TEMPLATE.replace('{{INPUT_TEXT}}', text);
+    
+    const requestPayload = {
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a helpful assistant that extracts wine information from Korean text and outputs valid JSON only.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.1,
+      response_format: { type: 'json_object' }
+    };
+    
+    console.log('[OpenAI] 요청 페이로드:', {
+      model: requestPayload.model,
+      temperature: requestPayload.temperature,
+      systemMessageLength: requestPayload.messages[0].content.length,
+      userMessageLength: requestPayload.messages[1].content.length,
+      promptPreview: prompt.substring(0, 300),
+      fullPayload: JSON.stringify(requestPayload).substring(0, 1000),
+      apiKeyPreview: OPENAI_API_KEY ? `${OPENAI_API_KEY.substring(0, 10)}...` : '없음'
+    });
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        'Authorization': `Bearer ${OPENAI_API_KEY}` // 전체 키 사용
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful assistant that extracts wine information from Korean text and outputs valid JSON only.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.3,
-        response_format: { type: 'json_object' }
-      })
+      body: JSON.stringify(requestPayload)
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API 오류:', response.status, errorText);
+      console.error('[OpenAI] API 오류:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText: errorText.substring(0, 500)
+      });
       return null;
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
     
+    console.log('[OpenAI] 응답 받음:', {
+      hasContent: !!content,
+      contentLength: content?.length || 0,
+      contentPreview: content?.substring(0, 200) || '없음'
+    });
+    
     if (!content) {
-      console.error('OpenAI 응답에 content가 없습니다:', data);
+      console.error('[OpenAI] 응답에 content가 없습니다:', {
+        data: JSON.stringify(data).substring(0, 500)
+      });
       return null;
     }
 
     // JSON 파싱
-    const parsed = JSON.parse(content);
+    let parsed;
+    try {
+      parsed = JSON.parse(content);
+      console.log('[OpenAI] JSON 파싱 성공:', {
+        hasWines: !!parsed.wines,
+        winesCount: parsed.wines?.length || 0,
+        isArray: Array.isArray(parsed)
+      });
+    } catch (parseError) {
+      console.error('[OpenAI] JSON 파싱 실패:', {
+        error: parseError.message,
+        contentPreview: content.substring(0, 500)
+      });
+      return null;
+    }
+    
     // OpenAI는 response_format이 json_object일 때 { "wines": [...] } 형태로 반환할 수 있음
-    return parsed.wines || (Array.isArray(parsed) ? parsed : []);
+    const result = parsed.wines || (Array.isArray(parsed) ? parsed : []);
+    console.log('[OpenAI] 최종 결과:', {
+      resultCount: result.length,
+      resultPreview: result.length > 0 ? JSON.stringify(result[0]).substring(0, 200) : '빈 배열'
+    });
+    return result;
   } catch (error) {
-    console.error('OpenAI API 호출 오류:', error);
+    console.error('[OpenAI] API 호출 오류:', {
+      error: error.message,
+      stack: error.stack
+    });
     return null;
   }
 }
@@ -164,52 +228,105 @@ async function callOpenAI(text) {
  * Gemini API 호출
  */
 async function callGemini(text) {
+  const GEMINI_API_KEY = getGeminiKey();
   if (!GEMINI_API_KEY) {
-    console.warn('GEMINI_API_KEY가 설정되지 않았습니다.');
+    console.warn('[Gemini] API 키가 설정되지 않았습니다.');
     return null;
   }
+
+  console.log('[Gemini] API 호출 시작:', {
+    textLength: text.length,
+    textPreview: text.substring(0, 100),
+    hasApiKey: !!GEMINI_API_KEY
+  });
 
   try {
     const prompt = PROMPT_TEMPLATE.replace('{{INPUT_TEXT}}', text);
     
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
+    const requestPayload = {
+      contents: [{
+        parts: [{
+          text: prompt
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.1,
+        responseMimeType: 'application/json'
+      }
+    };
+    
+    console.log('[Gemini] 요청 페이로드:', {
+      temperature: requestPayload.generationConfig.temperature,
+      responseMimeType: requestPayload.generationConfig.responseMimeType,
+      promptLength: prompt.length,
+      promptPreview: prompt.substring(0, 300),
+      fullPayload: JSON.stringify(requestPayload).substring(0, 1000),
+      apiKeyPreview: GEMINI_API_KEY ? `${GEMINI_API_KEY.substring(0, 10)}...` : '없음'
+    });
+    
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.3,
-          responseMimeType: 'application/json'
-        }
-      })
+      body: JSON.stringify(requestPayload)
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API 오류:', response.status, errorText);
+      console.error('[Gemini] API 오류:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText: errorText.substring(0, 500)
+      });
       return null;
     }
 
     const data = await response.json();
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
     
+    console.log('[Gemini] 응답 받음:', {
+      hasContent: !!content,
+      contentLength: content?.length || 0,
+      contentPreview: content?.substring(0, 200) || '없음'
+    });
+    
     if (!content) {
-      console.error('Gemini 응답에 content가 없습니다:', data);
+      console.error('[Gemini] 응답에 content가 없습니다:', {
+        data: JSON.stringify(data).substring(0, 500)
+      });
       return null;
     }
 
     // JSON 파싱
-    const parsed = JSON.parse(content);
+    let parsed;
+    try {
+      parsed = JSON.parse(content);
+      console.log('[Gemini] JSON 파싱 성공:', {
+        hasWines: !!parsed.wines,
+        winesCount: parsed.wines?.length || 0,
+        isArray: Array.isArray(parsed)
+      });
+    } catch (parseError) {
+      console.error('[Gemini] JSON 파싱 실패:', {
+        error: parseError.message,
+        contentPreview: content.substring(0, 500)
+      });
+      return null;
+    }
+    
     // Gemini도 { "wines": [...] } 형태로 반환할 수 있음
-    return parsed.wines || (Array.isArray(parsed) ? parsed : []);
+    const result = parsed.wines || (Array.isArray(parsed) ? parsed : []);
+    console.log('[Gemini] 최종 결과:', {
+      resultCount: result.length,
+      resultPreview: result.length > 0 ? JSON.stringify(result[0]).substring(0, 200) : '빈 배열'
+    });
+    return result;
   } catch (error) {
-    console.error('Gemini API 호출 오류:', error);
+    console.error('[Gemini] API 호출 오류:', {
+      error: error.message,
+      stack: error.stack
+    });
     return null;
   }
 }
@@ -281,38 +398,67 @@ function mergeWineResults(openaiWines, geminiWines) {
  * POST /ai/suggestion_fulltext
  */
 export const suggestionFulltext = async (req, res) => {
+  const startTime = Date.now();
   try {
     const { text } = req.body;
 
+    console.log('[AI Suggestion] 요청 받음:', {
+      textLength: text?.length || 0,
+      textPreview: text?.substring(0, 100) || '없음',
+      hasText: !!text,
+      trimmedLength: text?.trim()?.length || 0
+    });
+
     if (!text || !text.trim()) {
+      console.warn('[AI Suggestion] 텍스트가 없음:', { text, body: req.body });
       return res.status(400).json({
         error: '텍스트가 필요합니다.',
         message: '요청 본문에 text 필드가 필요합니다.'
       });
     }
 
+    const trimmedText = text.trim();
+    console.log('[AI Suggestion] API 호출 시작:', {
+      textLength: trimmedText.length,
+      openaiKeyExists: !!getOpenAIKey(),
+      geminiKeyExists: !!getGeminiKey()
+    });
+
     // OpenAI와 Gemini 동시 호출
     const [openaiWines, geminiWines] = await Promise.all([
-      callOpenAI(text.trim()),
-      callGemini(text.trim())
+      callOpenAI(trimmedText),
+      callGemini(trimmedText)
     ]);
 
-    console.log('OpenAI 결과:', openaiWines?.length || 0, '개');
-    console.log('Gemini 결과:', geminiWines?.length || 0, '개');
+    console.log('[AI Suggestion] API 호출 완료:', {
+      openaiCount: openaiWines?.length || 0,
+      geminiCount: geminiWines?.length || 0,
+      openaiData: openaiWines ? JSON.stringify(openaiWines).substring(0, 200) : 'null',
+      geminiData: geminiWines ? JSON.stringify(geminiWines).substring(0, 200) : 'null'
+    });
 
     // 합집합으로 병합
     const mergedWines = mergeWineResults(openaiWines, geminiWines);
 
-    console.log('병합된 결과:', mergedWines.length, '개');
+    console.log('[AI Suggestion] 병합 완료:', {
+      mergedCount: mergedWines.length,
+      elapsedTime: Date.now() - startTime,
+      mergedData: mergedWines.length > 0 ? JSON.stringify(mergedWines).substring(0, 300) : '빈 배열'
+    });
 
     // 결과가 없으면 빈 배열 반환
     if (mergedWines.length === 0) {
+      console.warn('[AI Suggestion] 결과 없음 - 빈 배열 반환');
       return res.json({ wines: [] });
     }
 
     res.json({ wines: mergedWines });
   } catch (error) {
-    console.error('AI suggestion 오류:', error);
+    console.error('[AI Suggestion] 오류 발생:', {
+      error: error.message,
+      stack: error.stack,
+      elapsedTime: Date.now() - startTime
+    });
     res.status(500).json({ 
       error: 'AI suggestion 처리 중 오류가 발생했습니다.',
       message: error.message 
@@ -324,6 +470,7 @@ export const suggestionFulltext = async (req, res) => {
 export async function analyzeWineResults(req, res) {
   try {
     const { results, wine } = req.body;
+    const OPENAI_API_KEY = getOpenAIKey();
     
     if (!results || !wine || !OPENAI_API_KEY) {
       return res.status(400).json({ error: '필수 파라미터가 누락되었거나 API 키가 설정되지 않았습니다.' });

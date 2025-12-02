@@ -5,17 +5,20 @@ FROM node:20-alpine AS client-builder
 
 WORKDIR /app
 
+# pnpm 설치
+RUN npm install -g pnpm
+
 # 루트 package.json과 workspace 설정 복사
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY shared/ ./shared/
-COPY client/package*.json ./client/
+COPY client/package.json ./client/
 
 # 클라이언트 의존성 설치
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 # 클라이언트 소스 복사 및 빌드
 COPY client/ ./client/
-RUN npm run build:client
+RUN pnpm --filter client build
 
 # Stage 2: Setup server
 FROM node:20-alpine AS server-builder
@@ -23,12 +26,12 @@ FROM node:20-alpine AS server-builder
 WORKDIR /app
 
 # 루트 package.json과 workspace 설정 복사
-COPY package*.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY shared/ ./shared/
-COPY server/package*.json ./server/
+COPY server/package.json ./server/
 
 # 서버 의존성 설치 (프로덕션만)
-RUN npm ci --only=production --ignore-scripts
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 # 서버 소스 복사
 COPY server/ ./server/
@@ -46,7 +49,9 @@ WORKDIR /app
 COPY --from=server-builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=server-builder --chown=nodejs:nodejs /app/server ./server
 COPY --from=server-builder --chown=nodejs:nodejs /app/shared ./shared
-COPY --from=server-builder --chown=nodejs:nodejs /app/package*.json ./
+COPY --from=server-builder --chown=nodejs:nodejs /app/package.json ./
+COPY --from=server-builder --chown=nodejs:nodejs /app/pnpm-lock.yaml ./
+COPY --from=server-builder --chown=nodejs:nodejs /app/pnpm-workspace.yaml ./
 
 # 빌드된 클라이언트 파일 복사
 COPY --from=client-builder --chown=nodejs:nodejs /app/client/build ./client/build

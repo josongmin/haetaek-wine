@@ -20,31 +20,15 @@ if ! command -v pm2 &> /dev/null; then
     npm install -g pm2
 fi
 
-# PM2 ecosystem 파일 생성
-log_info "PM2 ecosystem 파일 생성..."
-cat > "$APP_DIR/ecosystem.config.cjs" << 'EOF'
-module.exports = {
-  apps: [{
-    name: 'admin-api',
-    script: './server/index.js',
-    instances: 1,
-    exec_mode: 'cluster',
-    watch: false,
-    max_memory_restart: '500M',
-    env: {
-      NODE_ENV: 'production',
-      PORT: 3000
-    },
-    error_file: './logs/err.log',
-    out_file: './logs/out.log',
-    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-    merge_logs: true,
-    autorestart: true,
-    max_restarts: 10,
-    min_uptime: '10s'
-  }]
-};
-EOF
+# PM2 ecosystem 파일은 이미 존재하므로 스킵
+log_info "기존 ecosystem.config.cjs 사용..."
+
+# 서버 빌드
+log_info "서버 빌드 중..."
+cd "$APP_DIR"
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm run build:server
+pnpm run build:client
 
 # 로그 디렉토리 생성
 mkdir -p "$APP_DIR/logs"

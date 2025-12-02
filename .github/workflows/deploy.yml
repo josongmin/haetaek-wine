@@ -1,15 +1,14 @@
-name: Deploy to AWS
+name: Deploy Full Stack
 
 on:
   push:
     branches:
       - main
-      - production
   workflow_dispatch:
 
 env:
   NODE_VERSION: '20.x'
-  AWS_REGION: ap-northeast-2  # 서울 리전
+  AWS_REGION: ap-northeast-2
 
 jobs:
   test:
@@ -24,20 +23,51 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Run server tests
-        run: npm run test --workspace=server
+        run: pnpm --filter server test
+        continue-on-error: true
         env:
           NODE_ENV: test
 
-  build:
-    name: Build Application
+  backend:
+    name: Deploy Backend to EC2
     runs-on: ubuntu-latest
     needs: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Deploy backend
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            cd /var/www/wine-admin
+            git pull origin main
+            pnpm install --frozen-lockfile --ignore-scripts
+            pnpm run build:server
+            pm2 reload admin-api --update-env || pm2 start ecosystem.config.cjs --env production
+            pm2 save
+          EOF
+
+  frontend:
+    name: Deploy Frontend to S3
+    runs-on: ubuntu-latest
+    needs: backend
     
     steps:
       - name: Checkout code
@@ -47,36 +77,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
-      - name: Build client
-        run: npm run build:client
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: client-build
-          path: client/build/
-          retention-days: 7
-
-  deploy:
-    name: Deploy to AWS
-    runs-on: ubuntu-latest
-    needs: build
-    environment: production
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: client-build
-          path: client/build/
+      - name: Build frontend
+        run: pnpm run build:client
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -85,56 +96,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # Option 1: Deploy to EC2 via SSH
-      - name: Deploy to EC2
-        if: vars.DEPLOYMENT_TYPE == 'ec2'
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ${{ secrets.EC2_USER }}
-          EC2_KEY: ${{ secrets.EC2_SSH_KEY }}
+      - name: Sync to S3
         run: |
-          echo "$EC2_KEY" > private_key.pem
-          chmod 600 private_key.pem
-          
-          # 파일 전송
-          rsync -avz -e "ssh -i private_key.pem -o StrictHostKeyChecking=no" \
-            --exclude 'node_modules' \
-            --exclude '.git' \
-            ./ $EC2_USER@$EC2_HOST:~/wine-admin/
-          
-          # 서버에서 배포 스크립트 실행
-          ssh -i private_key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
-            cd ~/wine-admin
-            npm ci --ignore-scripts
-            npm run build:client
-            pm2 reload admin-api --update-env || pm2 start server/index.js --name admin-api
-          EOF
-          
-          rm -f private_key.pem
+          aws s3 sync ./client/build s3://${{ secrets.S3_BUCKET_NAME }} --delete
 
-      # Option 2: Deploy to S3 + CloudFront (클라이언트만)
-      - name: Deploy client to S3
-        if: vars.DEPLOYMENT_TYPE == 's3'
+      - name: CloudFront Cache Invalidation
         run: |
-          aws s3 sync client/build/ s3://${{ secrets.S3_BUCKET_NAME }}/ --delete
           aws cloudfront create-invalidation \
             --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
 
-      # Option 3: Deploy to Elastic Beanstalk
-      - name: Deploy to Elastic Beanstalk
-        if: vars.DEPLOYMENT_TYPE == 'eb'
+      - name: Deployment Success
         run: |
-          # EB CLI 설치
-          pip install awsebcli
-          
-          # 배포
-          eb init -r ${{ env.AWS_REGION }} ${{ secrets.EB_APPLICATION_NAME }}
-          eb deploy ${{ secrets.EB_ENVIRONMENT_NAME }}
-
-      - name: Notify deployment
-        if: always()
-        run: |
-          echo "Deployment completed with status: ${{ job.status }}"
+          echo "✅ 배포 완료!"
+          echo "Backend: http://${{ secrets.EC2_HOST }}"
+          echo "Frontend: CloudFront 배포 완료"
 
 

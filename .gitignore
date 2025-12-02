@@ -7,10 +7,13 @@
 # 환경 변수 파일
 .env
 .env.*.local
+env/
 
 # Firebase 및 민감한 설정 파일
 **/firebase-adminsdk.json
 **/config/firebase-adminsdk.json
+*.pem
+*.key
 
 # 빌드 결과물
 dist/

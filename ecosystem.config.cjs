@@ -10,7 +10,7 @@
 module.exports = {
   apps: [{
     name: 'admin-api',
-    script: './server/index.js',
+    script: './server/dist/index.js',
     
     // 인스턴스 수 (클러스터 모드)
     instances: 'max', // CPU 코어 수만큼 실행
@@ -28,11 +28,11 @@ module.exports = {
     // 환경 변수
     env: {
       NODE_ENV: 'development',
-      PORT: 3000
+      PORT: 4000
     },
     env_production: {
       NODE_ENV: 'production',
-      PORT: 3000
+      PORT: 4000
     },
     
     // 로그 설정
@@ -73,7 +73,7 @@ module.exports = {
       ref: 'origin/main',
       repo: 'git@github.com:your-org/wine-admin.git',
       path: '/home/ubuntu/wine-admin',
-      'post-deploy': 'npm ci && npm run build:client && pm2 reload ecosystem.config.cjs --env production',
+      'post-deploy': 'pnpm install --frozen-lockfile && pnpm run build:client && pm2 reload ecosystem.config.cjs --env production',
       'pre-deploy-local': 'echo "Deploying to production..."',
       'post-deploy-failed': 'echo "Deployment failed" && pm2 logs'
     },
@@ -83,7 +83,7 @@ module.exports = {
       ref: 'origin/develop',
       repo: 'git@github.com:your-org/wine-admin.git',
       path: '/home/ubuntu/wine-admin-staging',
-      'post-deploy': 'npm ci && npm run build:client && pm2 reload ecosystem.config.cjs',
+      'post-deploy': 'pnpm install --frozen-lockfile && pnpm run build:client && pm2 reload ecosystem.config.cjs',
       env: {
         NODE_ENV: 'staging'
       }

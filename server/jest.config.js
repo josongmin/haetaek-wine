@@ -4,12 +4,16 @@ export default {
   testMatch: ['**/tests/**/*.test.js'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
   collectCoverageFrom: [
-    'controllers/**/*.js',
-    'dao/**/*.js',
-    '!**/*.test.js'
+    'controllers/**/*.{js,ts}',
+    'dao/**/*.{js,ts}',
+    '!**/*.test.{js,ts}',
+    '!**/*.d.ts'
   ],
   coverageDirectory: 'coverage',
-  verbose: true
+  verbose: true,
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.(ts|js)$': '$1.$2'
+  }
 };
 
 

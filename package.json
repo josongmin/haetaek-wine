@@ -6,12 +6,22 @@
   "workspaces": ["shared", "server", "client"],
   "main": "index.js",
   "scripts": {
-    "dev": "npm run start --workspace=server",
-    "start:server": "npm run start --workspace=server",
-    "start:client": "npm run start --workspace=client",
-    "build": "npm run build:client",
-    "build:client": "npm -w client ci && npm -w client run build",
-    "deploy": "pm2 stop admin-api || true && npm ci --ignore-scripts && npm run build:client && pm2 start admin-api"
+    "dev": "pnpm --filter server dev",
+    "dev:server": "pnpm --filter server dev",
+    "dev:server:restart": "pnpm --filter server dev:restart",
+    "dev:client": "pnpm --filter client dev",
+    "start:server": "pnpm --filter server start",
+    "start:server:restart": "pnpm --filter server start:restart",
+    "start:client": "pnpm --filter client dev",
+    "build": "pnpm run build:server && pnpm run build:client",
+    "build:server": "pnpm --filter server build",
+    "build:client": "pnpm --filter client install --frozen-lockfile && pnpm --filter client build",
+    "type-check": "pnpm --filter server type-check",
+    "type-check:server": "pnpm --filter server type-check",
+    "deploy": "pm2 stop admin-api || true && pnpm install --frozen-lockfile --ignore-scripts && pnpm run build && pm2 start ecosystem.config.cjs --env production",
+    "deploy:quick": "./scripts/deploy.sh",
+    "deploy:setup": "./scripts/setup-pm2.sh",
+    "deploy:rollback": "./scripts/rollback.sh"
   },
   "dependencies": {
     "express": "^4.18.2",
